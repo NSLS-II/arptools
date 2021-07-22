@@ -1,17 +1,18 @@
 # Undefine CMake in-source builds in order to be consistent with f33+
 %undefine __cmake_in_source_build
+
 %global _hardened_build 1
 %global debug_package %{nil}
 
 
 Name:           arptools
-Version:        0.1
+Version:        0.1.2
 Release:        1%{?dist}
 Summary:        arpwatch ARP packet monitor
 
 License:        BSD
 URL:            https://github.com/NSLS-II/arptools
-Source0:        https://github.com/NSLS-II/arptools/archive/refs/tags/v0.1.2.tar.gz
+Source0:        https://github.com/NSLS-II/arptools/archive/refs/tags/v%{version}.tar.gz
 
 BuildRequires:  cmake
 BuildRequires:  systemd-rpm-macros
@@ -27,7 +28,7 @@ Requires:       libnet
 arpwatch ARP packet monitor
 
 %prep
-%setup -q -n arptools-master
+%autosetup
 
 
 %build
@@ -45,5 +46,8 @@ arpwatch ARP packet monitor
 %{_unitdir}/arpwatch.service
 
 %changelog
-* Wed Jul 21 2021 Stuart Campbell <scampbell@bnl.gov>
+* Thu Jul 22 2021 Stuart Campbell <scampbell@bnl.gov> 0.1.2-1
+- Bumped version to 0.1.2
+
+* Wed Jul 21 2021 Stuart Campbell <scampbell@bnl.gov> 0.1-1
 - Initial version of package
