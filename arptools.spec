@@ -10,8 +10,8 @@ Release:        1%{?dist}
 Summary:        arpwatch ARP packet monitor
 
 License:        BSD
-URL:            https://code.nsls2.bnl.gov/devops/arptools
-Source0:        https://code.nsls2.bnl.gov/devops/arptools/-/archive/master/arptools-master.tar.gz
+URL:            https://github.com/NSLS-II/arptools
+Source0:        https://github.com/NSLS-II/arptools/archive/refs/tags/v0.1.2.tar.gz
 
 BuildRequires:  cmake
 BuildRequires:  systemd-rpm-macros
@@ -31,7 +31,7 @@ arpwatch ARP packet monitor
 
 
 %build
-%cmake -DCPPLINT_CHECK=0 
+%cmake -DCPPLINT_CHECK=0
 %cmake_build
 
 
@@ -45,5 +45,5 @@ arpwatch ARP packet monitor
 %{_unitdir}/arpwatch.service
 
 %changelog
-* Wed Jul 21 2021 Stuart Campbell <scampbell@bnl.gov> 
+* Wed Jul 21 2021 Stuart Campbell <scampbell@bnl.gov>
 - Initial version of package
