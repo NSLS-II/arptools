@@ -57,7 +57,7 @@ void mysql_print_error(MYSQL *con) {
 void * mysql_thread(void * arg) {
   arpwatch_params *params = (arpwatch_params *) arg;
 
-  INFO_COMMENT("Starting mysql thread\n");
+  NOTICE_COMMENT("Starting mysql thread\n");
 
   for (;;) {
     MYSQL *con = mysql_init(NULL);

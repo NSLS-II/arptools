@@ -176,7 +176,7 @@ int capture_start(arpwatch_params *params) {
     goto _error;
   }
 
-  INFO_PRINT("Starting capture on : %s\n", params->iface);
+  NOTICE_PRINT("Starting capture on : %s\n", params->iface);
   pcap_loop(pcap_description, -1, capture_callback,
             (u_char*)(&(params->data_fifo)));
 

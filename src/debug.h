@@ -56,7 +56,7 @@
   fprintf(stderr, SD_ERR "%s:%-4d:%s(): " fmt, \
           __FILENAME__, __LINE__, __func__, __VA_ARGS__);
 
-#define INFO_PRINT(fmt, ...) \
+#define NOTICE_PRINT(fmt, ...) \
   fprintf(stderr, SD_NOTICE "%s:%-4d:%s(): " fmt, \
           __FILENAME__, __LINE__, __func__, __VA_ARGS__);
 
@@ -68,7 +68,7 @@
   fprintf(stderr, SD_ERR "%s:%-4d:%s(): %s", \
           __FILENAME__, __LINE__, __func__, txt);
 
-#define INFO_COMMENT(txt) \
+#define NOTICE_COMMENT(txt) \
   fprintf(stderr, SD_NOTICE "%s:%-4d:%s(): %s", \
           __FILENAME__, __LINE__, __func__, txt);
 
@@ -77,7 +77,7 @@
 #define DEBUG_PRINT(fmt, ...) \
   do {} while (0)
 
-#define INFO_PRINT(fmt, ...) \
+#define NOTICE_PRINT(fmt, ...) \
   fprintf(stderr, fmt, \
           __VA_ARGS__);
 
@@ -92,7 +92,7 @@
   fprintf(stderr, "%s(): %s", \
           __func__, txt);
 
-#define INFO_COMMENT(txt) \
+#define NOTICE_COMMENT(txt) \
   fprintf(stderr, "%s", txt);
 
 #endif
