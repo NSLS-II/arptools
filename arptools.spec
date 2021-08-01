@@ -12,7 +12,7 @@ Summary:        arpwatch ARP packet monitor
 
 License:        BSD
 URL:            https://github.com/NSLS-II/arptools
-Source0:        https://github.com/NSLS-II/arptools/archive/refs/tags/v%{version}.tar.gz
+Source0:        https://github.com/NSLS-II/arptools/archive/%v{version}/arptools-v%{version}.tar.gz
 
 BuildRequires:  cmake
 BuildRequires:  systemd-rpm-macros
@@ -28,7 +28,7 @@ Requires:       libnet
 arpwatch ARP packet monitor
 
 %prep
-%setup -n arptools-%{version}
+%autosetup
 
 %build
 %cmake -DCPPLINT_CHECK=0
