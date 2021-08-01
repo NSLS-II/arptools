@@ -42,6 +42,10 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include(PreventInSourceBuilds)
 include(systemdservice)
 
+# Set C standard
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED TRUE)
+
 # set the project name
 project(arptools C)
 
@@ -110,8 +114,8 @@ target_compile_options(arpwatch PRIVATE ${MYSQL_CFLAGS})
 #target_link_libraries(arpwatch PRIVATE ${PCAP_LIBRARY} ${NET_LIBRARY} ${MYSQL_LIBS} -pthread)
 target_link_libraries(arpwatch PRIVATE pcap net pthread config ${MYSQL_LIBS})
 
-# Set C standard
-set_property(TARGET arpwatch PROPERTY C_STANDARD 11)
+#set_property(TARGET arpwatch PROPERTY C_STANDARD 11)
+#set_property(TARGET arpwatch PROPERTY CMAKE_C_STANDARD_REQUIRED TRUE)
 
 # Install
 
