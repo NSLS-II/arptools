@@ -18,8 +18,8 @@ BuildRequires:  cmake
 BuildRequires:  libpcap-devel
 BuildRequires:  libnet-devel
 BuildRequires:  libconfig-devel
-BuildRequires:  mariadb-devel
 BuildRequires:  systemd-devel
+%{?el7:BuildRequires:  mariadb-devel}
 %{?el8:BuildRequires:  mariadb-connector-c-devel}
 %{?el8:BuildRequires:  systemd-rpm-macros}
 Requires:       libpcap
