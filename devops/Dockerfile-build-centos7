@@ -5,18 +5,9 @@ RUN yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.n
 #RUN yum config-manager --set-enabled powertools
 RUN yum -y update
 RUN yum -y group install "Development Tools"
-RUN yum -y install cmake cmake3 systemd-rpm-macros libpcap-devel libnet-devel libconfig-devel mariadb-devel mariadb-connector-c-devel systemd-devel
-RUN yum -y install python2-pip python3-pip
+RUN yum -y install cmake3 \
+                   libpcap-devel libnet-devel libconfig-devel \
+                   mariadb-devel systemd-devel pkg-config
+RUN yum -y install python3-pip
 RUN pip3 install cpplint
-RUN cmake3 --version
-RUN alternatives --install /usr/local/bin/cmake cmake /usr/bin/cmake 10 \
-  --slave /usr/local/bin/ctest ctest /usr/bin/ctest \
-  --slave /usr/local/bin/cpack cpack /usr/bin/cpack \
-  --slave /usr/local/bin/ccmake ccmake /usr/bin/ccmake \
-  --family cmake
-
-RUN alternatives --install /usr/local/bin/cmake cmake /usr/bin/cmake3 20 \
-  --slave /usr/local/bin/ctest ctest /usr/bin/ctest3 \
-  --slave /usr/local/bin/cpack cpack /usr/bin/cpack3 \
-  --slave /usr/local/bin/ccmake ccmake /usr/bin/ccmake3 \
-  --family cmake
+RUN pkg-config systemd --print-variables | less
