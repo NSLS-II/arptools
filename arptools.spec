@@ -20,6 +20,7 @@ BuildRequires:  libpcap-devel
 BuildRequires:  libnet-devel
 BuildRequires:  libconfig-devel
 BuildRequires:  mariadb-connector-c-devel
+BuildRequires:  systemd-devel
 Requires:       libpcap
 Requires:       libnet
 
