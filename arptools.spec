@@ -19,6 +19,7 @@ BuildRequires:  systemd-rpm-macros
 BuildRequires:  libpcap-devel
 BuildRequires:  libnet-devel
 BuildRequires:  libconfig-devel
+BuildRequires:  mariadb-devel
 BuildRequires:  mariadb-connector-c-devel
 BuildRequires:  systemd-devel
 Requires:       libpcap
