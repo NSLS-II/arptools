@@ -48,10 +48,10 @@ set(CMAKE_C_STANDARD_REQUIRED TRUE)
 set(CMAKE_C_EXTENSIONS ON)
 
 # Options
-option(CPPLINT_CHECK "Check CXX Source for Formatting" ON)
-option(PEDANTIC      "Compile with pedantic warnings" ON)
-option(DEBUG         "Show debug comments" OFF)
-option(SYSTEMD       "Compile as systemd daemon" ON)
+option(CPPLINT_CHECK        "Check CXX Source for Formatting" ON)
+option(PEDANTIC             "Compile with pedantic warnings" ON)
+option(DEBUG                "Show debug comments" OFF)
+option(SYSTEMD              "Compile as systemd daemon" ON)
 option(NO_IN_SOURCE_BUILDS  "Prevent in source builds" ON)
 
 if(NO_IN_SOURCE_BUILDS)
@@ -59,7 +59,7 @@ if(NO_IN_SOURCE_BUILDS)
 endif()
 
 # Add options
-add_compile_options(-fPIE)
+# add_compile_options(-fPIE)
 
 if(PEDANTIC)
   add_compile_options(-pedantic -Wall -Wextra -Werror)
