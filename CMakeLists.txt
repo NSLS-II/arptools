@@ -87,6 +87,13 @@ add_executable(arpwatch src/arpwatch.c
                         src/arp.c
                         src/utils.c
                         src/capture.c
+                        src/arp.h
+                        src/arpwatch.h
+                        src/capture.h
+                        src/debug.h
+                        src/fifo.h
+                        src/mysql.h
+                        src/utils.h
                         version.c)
 
 add_custom_target(version_info DEPENDS ${CMAKE_BINARY_DIR}/version.c)
