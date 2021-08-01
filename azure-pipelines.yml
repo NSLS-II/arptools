@@ -21,11 +21,11 @@ stages:
     strategy:
       matrix:
         centos8:
-          containerImage: stuwilkins/xsecurelock-build-centos8:latest
+          containerImage: stuwilkins/arptools-centos8:latest
           pkg_type: redhat
           rpmrelease: centos8
         centos7:
-          containerImage: stuwilkins/xsecurelock-build-centos7:latest
+          containerImage: stuwilkins/arptools-centos7:latest
           pkg_type: redhat
           rpmrelease: centos7
 
