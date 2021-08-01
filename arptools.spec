@@ -33,7 +33,7 @@ arpwatch ARP packet monitor
 
 %build
 cmake3 -S . -B . -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCPPLINT_CHECK=0 -DNO_IN_SOURCE_BUILDS=NO
-%make
+make
 
 %install
 %make_install
