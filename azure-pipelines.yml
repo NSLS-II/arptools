@@ -43,7 +43,7 @@ stages:
     - script: |
         set -e
         cd build
-        make
+        VERBOSE=1 make
       displayName: Build
 
     - script: |
