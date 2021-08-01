@@ -39,22 +39,24 @@
 cmake_minimum_required(VERSION 3.10)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-include(PreventInSourceBuilds)
-include(systemdservice)
+# set the project name
+project(arptools C)
 
 # Set C standard
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
 set(CMAKE_C_EXTENSIONS ON)
 
-# set the project name
-project(arptools C)
-
 # Options
 option(CPPLINT_CHECK "Check CXX Source for Formatting" ON)
 option(PEDANTIC      "Compile with pedantic warnings" ON)
 option(DEBUG         "Show debug comments" OFF)
 option(SYSTEMD       "Compile as systemd daemon" ON)
+option(NO_IN_SOURCE_BUILDS  "Prevent in source builds" ON)
+
+if(NO_IN_SOURCE_BUILDS)
+  include(PreventInSourceBuilds)
+endif()
 
 # Add options
 add_compile_options(-fPIE)
@@ -69,6 +71,7 @@ endif()
 
 if(SYSTEMD)
   add_compile_options(-DSYSTEMD)
+  include(systemdservice)
 endif()
 
 if(CPPLINT_CHECK)
