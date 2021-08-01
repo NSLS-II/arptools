@@ -64,7 +64,7 @@ stages:
 #          -uc -us \
 #          --git-export-dir=build \
 #          --git-tarball-dir=build
-#        old_debfile=$(ls -1 build/xsecurelock-nsls2_*.deb | head -1)
+#        old_debfile=$(ls -1 build/arptools_*.deb | head -1)
 #        new_debfile=$(echo ${old_debfile} | sed "s/\.deb/-$(debrelease).deb/")
 #        mv "${old_debfile}" "${new_debfile}"
 #        echo "##vso[task.setvariable variable=releasefile]${new_debfile}"
@@ -77,7 +77,7 @@ stages:
 #    - task: CopyFiles@2
 #      inputs:
 #        targetFolder: '$(Build.ArtifactStagingDirectory)'
-#        contents: 'build/xsecurelock-nsls2_*.deb'
+#        contents: 'build/arptools_*.deb'
 #        flattenFolders: true
 #      condition: and(succeeded(), eq(variables.pkg_type, 'debian'))
 #
@@ -101,46 +101,45 @@ stages:
         rpmbuild -bb --define "_topdir ${RPMDIR}" --define "version $(gitversion)" arptools.spec
       displayName: 'Build rpm Package'
       condition: and(succeeded(), eq(variables.pkg_type, 'redhat'))
-#
-#    - task: CopyFiles@2
-#      inputs:
-#        targetFolder: '$(Build.ArtifactStagingDirectory)'
-#        contents: rpmbuild/RPMS/x86_64/*
-#        flattenFolders: true
-#      condition: and(succeeded(), eq(variables.pkg_type, 'redhat'))
-#
-#    - task: PublishBuildArtifacts@1
-#      inputs:
-#        pathToPublish: '$(Build.ArtifactStagingDirectory)'
-#        artifactName: packages
-#      displayName: Publish RedHat Packages
-#      condition: and(succeeded(), eq(variables.pkg_type, 'redhat'))
-#
-#  - job: Publish
-#    dependsOn: Build
-#    condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/v')
-#    steps:
-#      - script: |
-#          GITDESC=$(git describe --abbrev=0)
-#          echo "##vso[task.setvariable variable=gitdesc]$GITDESC"
-#          echo "##[debug] GITDESC = $GITDESC"
-#        displayName: Set Git Describe to Variable
-#      - task: DownloadBuildArtifacts@0
-#        inputs:
-#          buildType: 'current'
-#          downloadType: 'single'
-#          artifactName: 'packages'
-#          downloadPath: '$(System.ArtifactsDirectory)'
-#        displayName: Download Packages
-#      - task: GithubRelease@0
-#        inputs:
-#          gitHubConnection: github.com_stuwilkins
-#          repositoryName: NSLS-II/xsecurelock
-#          assets: '$(System.ArtifactsDirectory)/**/*'
-#          action: edit
-#          target: '$(Build.SourceVersion)'
-#          tag: $(gitdesc)
-#          addChangeLog: false
-#          assetUploadMode: replace
-#        displayName: 'Attach package to release'
-#
+
+    - task: CopyFiles@2
+      inputs:
+        targetFolder: '$(Build.ArtifactStagingDirectory)'
+        contents: rpmbuild/RPMS/x86_64/*
+        flattenFolders: true
+      condition: and(succeeded(), eq(variables.pkg_type, 'redhat'))
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)'
+        artifactName: packages
+      displayName: Publish RedHat Packages
+      condition: and(succeeded(), eq(variables.pkg_type, 'redhat'))
+
+  - job: Publish
+    dependsOn: Build
+    condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/v')
+    steps:
+      - script: |
+          GITDESC=$(git describe --abbrev=0)
+          echo "##vso[task.setvariable variable=gitdesc]$GITDESC"
+          echo "##[debug] GITDESC = $GITDESC"
+        displayName: Set Git Describe to Variable
+      - task: DownloadBuildArtifacts@0
+        inputs:
+          buildType: 'current'
+          downloadType: 'single'
+          artifactName: 'packages'
+          downloadPath: '$(System.ArtifactsDirectory)'
+        displayName: Download Packages
+      - task: GithubRelease@0
+        inputs:
+          gitHubConnection: github.com_stuwilkins
+          repositoryName: NSLS-II/arptools
+          assets: '$(System.ArtifactsDirectory)/**/*'
+          action: edit
+          target: '$(Build.SourceVersion)'
+          tag: $(gitdesc)
+          addChangeLog: false
+          assetUploadMode: replace
+        displayName: 'Attach package to release'
