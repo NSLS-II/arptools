@@ -103,6 +103,9 @@ target_compile_options(arpwatch PRIVATE ${MYSQL_CFLAGS})
 #target_link_libraries(arpwatch PRIVATE ${PCAP_LIBRARY} ${NET_LIBRARY} ${MYSQL_LIBS} -pthread)
 target_link_libraries(arpwatch PRIVATE pcap net pthread config ${MYSQL_LIBS})
 
+# Set C standard
+set_property(TARGET arpwatch PROPERTY C_STANDARD 11)
+
 # Install
 
 install(TARGETS arpwatch RUNTIME DESTINATION bin/)
