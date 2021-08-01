@@ -38,7 +38,7 @@ stages:
         mkdir build
         cd build
         cmake ..
-      displayName: Run Configure
+      displayName: Run CMAKE
 
     - script: |
         set -e
@@ -95,16 +95,10 @@ stages:
         SOURCES=${RPMDIR}/SOURCES
         mkdir -p ${SOURCES}
         git archive --format=tar \
-          --prefix=xsecurelock-$(gitversion)-nsls2/ \
-          --output=${SOURCES}/xsecurelock-v$(gitversion)-nsls2.tar.gz \
+          --prefix=arptools-$(gitversion)/ \
+          --output=${SOURCES}/arptools-v$(gitversion).tar.gz \
           HEAD
-        #spectool -g -R xautolock.spec
-        #spectool -g -R feh.spec
-        cp xautolock.patch ${SOURCES}
-        rpmbuild -bb --define "_topdir ${RPMDIR}" --define "version $(gitversion)" xsecurelock-nsls2.spec
-        rpmbuild -bb --undefine="_disable_source_fetch" --define "_topdir ${RPMDIR}" xautolock.spec
-        rpmbuild -bb --undefine="_disable_source_fetch" --define "_topdir ${RPMDIR}" feh.spec
-        echo "##[debug] gitdesc = $(gitdesc)"
+        rpmbuild -bb --define "_topdir ${RPMDIR}" --define "version $(gitversion)" arptools.spec
       displayName: 'Build rpm Package'
       condition: and(succeeded(), eq(variables.pkg_type, 'redhat'))
 #

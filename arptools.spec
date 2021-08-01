@@ -6,8 +6,8 @@
 
 
 Name:           arptools
-Version:        0.1.2
-Release:        2%{?dist}
+Version:        %{version}
+Release:        0%{?dist}
 Summary:        arpwatch ARP packet monitor
 
 License:        BSD
