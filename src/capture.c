@@ -38,10 +38,13 @@
 
 #include <pcap.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/ethernet.h>
+#include <net/if.h>
 #include <net/if_arp.h>
 #include <netinet/ip.h>
 #include <netinet/ether.h>
@@ -51,6 +54,7 @@
 #include "debug.h"
 #include "arpwatch.h"
 #include "capture.h"
+#include "utils.h"
 
 pcap_t *pcap_description = NULL;
 
@@ -60,7 +64,8 @@ void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr,
   struct arphdr *aptr;
   struct arpbdy *bptr;
 
-  fifo *data = (fifo *) args;
+  arpwatch_params *params = (arpwatch_params*)args;
+  fifo *data = &params->data_fifo;
 
   eptr = (struct ether_header *) packet;
 
@@ -93,28 +98,35 @@ void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr,
     bptr = (struct arpbdy *) (packet +
       sizeof(struct ether_header) + sizeof(struct arphdr));
 
-    DEBUG_PRINT("Packet time : %ld\n", pkthdr->ts.tv_sec);
-    DEBUG_PRINT("ARP Source:  %-20s %-16s\n",
-                ether_ntoa((const struct ether_addr *)&bptr->ar_sha),
-                inet_ntoa(bptr->ar_sip));
-
-    arp_data *d = fifo_get_head(data);
-    d->ip_addr = bptr->ar_sip;
-    memcpy(d->hw_addr, bptr->ar_sha, ETH_ALEN);
-    d->ts = pkthdr->ts;
-    fifo_advance_head(data);
-
-    if (htons(aptr->ar_op) == ARPOP_REPLY) {
-      DEBUG_PRINT("Packet time : %ld\n", pkthdr->ts.tv_sec);
-      DEBUG_PRINT("ARP Dest  :  %-20s %-16s\n",
-                  ether_ntoa((const struct ether_addr *)&bptr->ar_tha),
-                  inet_ntoa(bptr->ar_tip));
+    if (memcmp(params->hwaddress, bptr->ar_sha, ETH_ALEN) ||
+        !params->filter_self) {
+      DEBUG_PRINT("Iface : %s Packet time : %ld ARP Source:  %-20s %-16s\n",
+                  params->iface,
+                  pkthdr->ts.tv_sec,
+                  ether_ntoa((const struct ether_addr *)&bptr->ar_sha),
+                  inet_ntoa(bptr->ar_sip));
 
       arp_data *d = fifo_get_head(data);
-      d->ip_addr = bptr->ar_tip;
-      memcpy(d->hw_addr, bptr->ar_tha, ETH_ALEN);
+      d->ip_addr = bptr->ar_sip;
+      memcpy(d->hw_addr, bptr->ar_sha, ETH_ALEN);
       d->ts = pkthdr->ts;
       fifo_advance_head(data);
+
+      if (htons(aptr->ar_op) == ARPOP_REPLY) {
+        DEBUG_PRINT("Iface : %s Packet time : %ld ARP Dest  :  %-20s %-16s\n",
+                    params->iface,
+                    pkthdr->ts.tv_sec,
+                    ether_ntoa((const struct ether_addr *)&bptr->ar_tha),
+                    inet_ntoa(bptr->ar_tip));
+
+        arp_data *d = fifo_get_head(data);
+        d->ip_addr = bptr->ar_tip;
+        memcpy(d->hw_addr, bptr->ar_tha, ETH_ALEN);
+        d->ts = pkthdr->ts;
+        fifo_advance_head(data);
+      }
+    } else {
+      DEBUG_COMMENT("Skipping packet ... MAC matches host\n");
     }
   }
 }
@@ -152,7 +164,18 @@ int capture_start(arpwatch_params *params) {
     goto _error;
   }
 
-  /* ask pcap for the network address and mask of the device */
+  // Get the mac address of the interface
+  struct ifreq ifr;
+  int s = socket(AF_INET, SOCK_DGRAM, 0);
+  strncpy(ifr.ifr_name, params->iface, IFNAMSIZ);
+  ioctl(s, SIOCGIFHWADDR, &ifr);
+  memcpy(params->hwaddress, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
+  DEBUG_PRINT("MAC Address of %s : %s\n",
+              params->iface,
+              int_to_mac(params->hwaddress));
+  close(s);
+
+  // Get the IP address and netmask of the interface
   pcap_lookupnet(params->iface, &netp, &maskp, errbuf);
 
   pcap_description = pcap_open_live(params->iface, BUFSIZ, 1,
@@ -178,7 +201,7 @@ int capture_start(arpwatch_params *params) {
 
   NOTICE_PRINT("Starting capture on : %s\n", params->iface);
   pcap_loop(pcap_description, -1, capture_callback,
-            (u_char*)(&(params->data_fifo)));
+            (u_char*)(params));
 
   rtn = 0;
 

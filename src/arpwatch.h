@@ -55,6 +55,7 @@ typedef struct {
   int arp_delay;
   int arp_loop_delay;
   int pcap_timeout;
+  int filter_self;
   fifo data_fifo;
   char program[ARPWATCH_CONFIG_MAX_STRING];
   char iface[ARPWATCH_CONFIG_MAX_STRING];
@@ -66,6 +67,7 @@ typedef struct {
   char label[ARPWATCH_CONFIG_MAX_STRING];
   uint32_t ipaddress;
   uint32_t subnet;
+  unsigned char hwaddress[ETH_ALEN];
 } arpwatch_params;
 
 

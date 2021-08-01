@@ -120,6 +120,10 @@ int read_global_config(arpwatch_params *params) {
     params->pcap_timeout = ARPWATCH_PCAP_TIMEOUT;
   }
 
+  if (!config_lookup_bool(&cfg, "filter_self", &params->filter_self)) {
+    params->filter_self = -1;
+  }
+
   config_setting_t *setting = config_lookup(&cfg, "instances");
   if (setting == NULL) {
     ERROR_COMMENT("No instances in config file.\n");
