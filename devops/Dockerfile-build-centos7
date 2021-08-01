@@ -22,3 +22,7 @@ RUN alternatives --install /usr/local/bin/cmake cmake /usr/bin/cmake3 20 \
   --family cmake
 RUN alternatives --display cmake
 RUN cmake --version
+RUN yum -y install centos-release-scl
+RUN yum -y install devtoolset-7
+RUN . /opt/rh/devtoolset-7/enable
+RUN gcc --version

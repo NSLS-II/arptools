@@ -72,35 +72,35 @@ int read_global_config(arpwatch_params *params) {
   if (config_lookup_string(&cfg, "hostname", &str)) {
     strncpy(params->hostname, str, ARPWATCH_CONFIG_MAX_STRING);
   } else {
-    ERROR_PRINT("No hostname defined in config file\n");
+    ERROR_COMMENT("No hostname defined in config file\n");
     goto _error;
   }
 
   if (config_lookup_string(&cfg, "username", &str)) {
     strncpy(params->username, str, ARPWATCH_CONFIG_MAX_STRING);
   } else {
-    ERROR_PRINT("No username defined in config file\n");
+    ERROR_COMMENT("No username defined in config file\n");
     goto _error;
   }
 
   if (config_lookup_string(&cfg, "database", &str)) {
     strncpy(params->database, str, ARPWATCH_CONFIG_MAX_STRING);
   } else {
-    ERROR_PRINT("No database defined in config file\n");
+    ERROR_COMMENT("No database defined in config file\n");
     goto _error;
   }
 
   if (config_lookup_string(&cfg, "password", &str)) {
     strncpy(params->password, str, ARPWATCH_CONFIG_MAX_STRING);
   } else {
-    ERROR_PRINT("No password defined in config file\n");
+    ERROR_COMMENT("No password defined in config file\n");
     goto _error;
   }
 
   if (config_lookup_string(&cfg, "location", &str)) {
     strncpy(params->location, str, ARPWATCH_CONFIG_MAX_STRING);
   } else {
-    ERROR_PRINT("No location defined in config file\n");
+    ERROR_COMMENT("No location defined in config file\n");
     goto _error;
   }
 
@@ -122,7 +122,7 @@ int read_global_config(arpwatch_params *params) {
 
   config_setting_t *setting = config_lookup(&cfg, "instances");
   if (setting == NULL) {
-    ERROR_PRINT("No instances in config file.\n");
+    ERROR_COMMENT("No instances in config file.\n");
     goto _error;
   }
 
@@ -152,7 +152,7 @@ int read_instance_config(arpwatch_params *params, int instance_num) {
 
   config_setting_t *setting = config_lookup(&cfg, "instances");
   if (setting == NULL) {
-    ERROR_PRINT("No instances in config file.\n");
+    ERROR_COMMENT("No instances in config file.\n");
     goto _error;
   }
   config_setting_t *instance = config_setting_get_elem(setting, instance_num);
@@ -161,38 +161,38 @@ int read_instance_config(arpwatch_params *params, int instance_num) {
   if (config_setting_lookup_string(instance, "interface", &str)) {
     strncpy(params->iface, str, ARPWATCH_CONFIG_MAX_STRING);
   } else {
-    ERROR_PRINT("No interface defined in config file\n");
+    ERROR_COMMENT("No interface defined in config file\n");
     goto _error;
   }
 
   if (config_setting_lookup_string(instance, "label", &str)) {
     strncpy(params->label, str, ARPWATCH_CONFIG_MAX_STRING);
   } else {
-    ERROR_PRINT("No label defined in config file\n");
+    ERROR_COMMENT("No label defined in config file\n");
     goto _error;
   }
 
   if (config_setting_lookup_string(instance, "ipaddress", &str)) {
     struct in_addr addr;
     if (!inet_aton(str, &addr)) {
-      ERROR_PRINT("Invalid ip address specified\n");
+      ERROR_COMMENT("Invalid ip address specified\n");
       goto _error;
     }
     params->ipaddress = addr.s_addr;
   } else {
-    ERROR_PRINT("No ipaddress defined in config file\n");
+    ERROR_COMMENT("No ipaddress defined in config file\n");
     goto _error;
   }
 
   if (config_setting_lookup_string(instance, "subnet", &str)) {
     struct in_addr addr;
     if (!inet_aton(str, &addr)) {
-      ERROR_PRINT("Invalid subnet mask specified\n");
+      ERROR_COMMENT("Invalid subnet mask specified\n");
       goto _error;
     }
     params->subnet = addr.s_addr;
   } else {
-    ERROR_PRINT("No subnet defined in config file\n");
+    ERROR_COMMENT("No subnet defined in config file\n");
     goto _error;
   }
 
@@ -221,7 +221,7 @@ int main(int argc, char *argv[]) {
           ARPWATCH_CONFIG_MAX_STRING);
 
   if (read_global_config(&params)) {
-    ERROR_PRINT("Error reading config file\n");
+    ERROR_COMMENT("Error reading config file\n");
     return EXIT_FAILURE;
   }
 
@@ -229,13 +229,13 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < params.num_instance; i++) {
     pid = fork();
     if (pid < 0) {
-      ERROR_PRINT("Error in fork()\n");
+      ERROR_COMMENT("Error in fork()\n");
       exit(EXIT_FAILURE);
     } else if (pid == 0) {
       DEBUG_PRINT("Child (%d): %d from %d\n", i, getpid(), getppid());
 
       if (read_instance_config(&params, i)) {
-        ERROR_PRINT("Error reading config file\n");
+        ERROR_COMMENT("Error reading config file\n");
         exit(EXIT_FAILURE);
       }
 

@@ -52,8 +52,9 @@ project(arptools C)
 
 # Options
 option(CPPLINT_CHECK "Check CXX Source for Formatting" ON)
-option(PEDANTIC "Compile with pedantic warnings" ON)
-option(DEBUG "Show debug comments" OFF)
+option(PEDANTIC      "Compile with pedantic warnings" ON)
+option(DEBUG         "Show debug comments" OFF)
+option(SYSTEMD       "Compile as systemd daemon" ON)
 
 # Add options
 add_compile_options(-fPIE)
@@ -64,6 +65,10 @@ endif()
 
 if(DEBUG)
   add_compile_options(-DDEBUG)
+endif()
+
+if(SYSTEMD)
+  add_compile_options(-DSYSTEMD)
 endif()
 
 if(CPPLINT_CHECK)

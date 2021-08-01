@@ -130,7 +130,7 @@ int capture_start(arpwatch_params *params) {
   int rtn = -1;
 
   if (pcap_findalldevs(&interfaces, errbuf)) {
-    ERROR_PRINT("pcap_findalldevs() : ERROR\n");
+    ERROR_COMMENT("pcap_findalldevs() : ERROR\n");
     goto _error;
   }
 
@@ -166,13 +166,13 @@ int capture_start(arpwatch_params *params) {
 
   // Compile the pcap program
   if (pcap_compile(pcap_description, &fp, params->program, 0, netp) == -1) {
-    ERROR_PRINT("pcap_compile() : ERROR\n");
+    ERROR_COMMENT("pcap_compile() : ERROR\n");
     goto _error;
   }
 
   // Filter based on compiled program
   if (pcap_setfilter(pcap_description, &fp) == -1) {
-    ERROR_PRINT("pcap_setfilter() : ERROR\n");
+    ERROR_COMMENT("pcap_setfilter() : ERROR\n");
     goto _error;
   }
 

@@ -57,7 +57,7 @@ void mysql_print_error(MYSQL *con) {
 void * mysql_thread(void * arg) {
   arpwatch_params *params = (arpwatch_params *) arg;
 
-  INFO_PRINT("Starting mysql thread\n");
+  INFO_COMMENT("Starting mysql thread\n");
 
   for (;;) {
     MYSQL *con = mysql_init(NULL);
@@ -92,7 +92,7 @@ void * mysql_thread(void * arg) {
       } else {
         // Error building time
         strncpy(time_buffer, "1970-01-01 00:00:00", sizeof(time_buffer));
-        ERROR_PRINT("Unable to convert packet time");
+        ERROR_COMMENT("Unable to convert packet time");
       }
 
       // Now lookup DNS entry
@@ -150,7 +150,7 @@ int mysql_setup(arpwatch_params *params) {
   // Setup FIFO
 
   if (fifo_init(&(params->data_fifo), 1000000) != FIFO_NOERR) {
-    ERROR_PRINT("fifo_init(): ERROR");
+    ERROR_COMMENT("fifo_init(): ERROR");
     return -1;
   }
 
@@ -160,7 +160,7 @@ int mysql_setup(arpwatch_params *params) {
   int err = pthread_create(&threadId, NULL,
                            &mysql_thread, (void *)params);
   if (err) {
-    ERROR_PRINT("Unable to create thread.");
+    ERROR_COMMENT("Unable to create thread.");
     return -1;
   }
 

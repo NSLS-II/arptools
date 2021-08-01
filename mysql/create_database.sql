@@ -10,5 +10,6 @@ CREATE TABLE arpdata(
   label      VARCHAR(256) NOT NULL,
   last_seen  DATETIME,
   created    DATETIME DEFAULT CURRENT_TIMESTAMP,
+  registered BOOL DEFAULT false NOT NULL,
   PRIMARY KEY (hw_address)
 );

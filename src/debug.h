@@ -38,6 +38,10 @@
 #ifndef SRC_DEBUG_H_
 #define SRC_DEBUG_H_
 
+#ifdef SYSTEMD
+#include <systemd/sd-daemon.h>
+#endif
+
 #ifndef __FILENAME__
 #define __FILENAME__      __FILE__
 #endif
@@ -45,16 +49,28 @@
 #ifdef DEBUG
 
 #define DEBUG_PRINT(fmt, ...) \
-  fprintf(stderr, "%s:%-4d:%s(): " fmt, \
-          __FILENAME__, __LINE__, __func__, ##__VA_ARGS__);
+  fprintf(stderr, SD_DEBUG "%s:%-4d:%s(): " fmt, \
+          __FILENAME__, __LINE__, __func__, __VA_ARGS__);
 
 #define ERROR_PRINT(fmt, ...) \
-  fprintf(stderr, "%s:%-4d:%s(): " fmt, \
-          __FILENAME__, __LINE__, __func__, ##__VA_ARGS__);
+  fprintf(stderr, SD_ERR "%s:%-4d:%s(): " fmt, \
+          __FILENAME__, __LINE__, __func__, __VA_ARGS__);
 
 #define INFO_PRINT(fmt, ...) \
-  fprintf(stderr, "%s:%-4d:%s(): " fmt, \
-          __FILENAME__, __LINE__, __func__, ##__VA_ARGS__);
+  fprintf(stderr, SD_NOTICE "%s:%-4d:%s(): " fmt, \
+          __FILENAME__, __LINE__, __func__, __VA_ARGS__);
+
+#define DEBUG_COMMENT(txt) \
+  fprintf(stderr, SD_DEBUG "%s:%-4d:%s(): %s", \
+          __FILENAME__, __LINE__, __func__, txt);
+
+#define ERROR_COMMENT(txt) \
+  fprintf(stderr, SD_ERR "%s:%-4d:%s(): %s", \
+          __FILENAME__, __LINE__, __func__, txt);
+
+#define INFO_COMMENT(txt) \
+  fprintf(stderr, SD_NOTICE "%s:%-4d:%s(): %s", \
+          __FILENAME__, __LINE__, __func__, txt);
 
 #else
 
@@ -63,11 +79,21 @@
 
 #define INFO_PRINT(fmt, ...) \
   fprintf(stderr, fmt, \
-          ##__VA_ARGS__);
+          __VA_ARGS__);
 
 #define ERROR_PRINT(fmt, ...) \
   fprintf(stderr, "%s(): " fmt, \
-          __func__, ##__VA_ARGS__);
+          __func__, __VA_ARGS__);
+
+#define DEBUG_COMMENT(txt) \
+  do {} while (0)
+
+#define ERROR_COMMENT(txt) \
+  fprintf(stderr, "%s(): %s", \
+          __func__, txt);
+
+#define INFO_COMMENT(txt) \
+  fprintf(stderr, "%s", txt);
 
 #endif
 

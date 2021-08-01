@@ -57,13 +57,13 @@ int arp_send(const char* device, uint32_t ip_probe,
   int rtn = -1;
 
   if ((l = libnet_init(LIBNET_LINK_ADV, device, errbuf)) == NULL) {
-    DEBUG_PRINT("Unable to initialize libnet\n");
+    DEBUG_COMMENT("Unable to initialize libnet\n");
     return -1;
   }
 
   ip_addr = libnet_get_ipaddr4(l);
   if ((hw_addr = libnet_get_hwaddr(l)) == NULL) {
-    DEBUG_PRINT("Unable to read HW address.\n");
+    DEBUG_COMMENT("Unable to read HW address.\n");
     goto _error;
   }
 
@@ -77,14 +77,14 @@ int arp_send(const char* device, uint32_t ip_probe,
   switch (l->link_type) {
     case 1: /* DLT_EN10MB */
       hrd = ARPHRD_ETHER;
-      DEBUG_PRINT("Link type ETHER\n");
+      DEBUG_COMMENT("Link type ETHER\n");
       break;
     case 6: /* DLT_IEEE802 */
-      DEBUG_PRINT("Link type IEEE802\n");
+      DEBUG_COMMENT("Link type IEEE802\n");
       hrd = ARPHRD_IEEE802;
       break;
     default:
-      DEBUG_PRINT("Unsupported link type\n");
+      DEBUG_COMMENT("Unsupported link type\n");
       goto _error;
   }
 
@@ -157,7 +157,7 @@ int arp_setup(arpwatch_params *params) {
   int err = pthread_create(&threadId, NULL,
                            &arp_thread, (void *)params);
   if (err) {
-    ERROR_PRINT("Unable to create thread.");
+    ERROR_COMMENT("Unable to create thread.");
     return -1;
   }
   return 0;
