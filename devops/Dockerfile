@@ -1,6 +1,0 @@
-# syntax=docker/dockerfile:1
-FROM centos:8
-RUN dnf install -y 'dnf-command(config-manager)'
-RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-RUN dnf config-manager --set-enabled powertools
-RUN dnf -y install cmake systemd-rpm-macros libpcap-devel libnet-devel libconfig-devel mariadb-connector-c-devel
