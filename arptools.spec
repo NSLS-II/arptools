@@ -28,7 +28,7 @@ Requires:       libnet
 arpwatch ARP packet monitor
 
 %prep
-%autosetup
+%setup -n arptools-%{version}
 
 %build
 %cmake -DCPPLINT_CHECK=0
