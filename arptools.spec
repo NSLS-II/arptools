@@ -32,7 +32,7 @@ arpwatch ARP packet monitor
 %autosetup
 
 %build
-%cmake -DCPPLINT_CHECK=0
+%cmake -DCPPLINT_CHECK=0 -DNO_IN_SOURCE_BUILDS=NO
 %cmake_build
 
 %install
