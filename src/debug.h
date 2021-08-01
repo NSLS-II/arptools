@@ -40,6 +40,15 @@
 
 #ifdef SYSTEMD
 #include <systemd/sd-daemon.h>
+#else
+#define SD_EMERG   ""
+#define SD_ALERT   ""
+#define SD_CRIT    ""
+#define SD_ERR     ""
+#define SD_WARNING ""
+#define SD_NOTICE  ""
+#define SD_INFO    ""
+#define SD_DEBUG   ""
 #endif
 
 #ifndef __FILENAME__
