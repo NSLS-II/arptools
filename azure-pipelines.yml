@@ -37,7 +37,7 @@ stages:
         set -e
         mkdir build
         cd build
-        cmake ..
+        cmake3 ..
       displayName: Run CMAKE
 
     - script: |
