@@ -87,22 +87,22 @@
   do {} while (0)
 
 #define NOTICE_PRINT(fmt, ...) \
-  fprintf(stderr, fmt, \
+  fprintf(stderr, SD_NOTICE fmt, \
           __VA_ARGS__);
 
 #define ERROR_PRINT(fmt, ...) \
-  fprintf(stderr, "%s(): " fmt, \
+  fprintf(stderr, SD_ERR "%s(): " fmt, \
           __func__, __VA_ARGS__);
 
 #define DEBUG_COMMENT(txt) \
   do {} while (0)
 
 #define ERROR_COMMENT(txt) \
-  fprintf(stderr, "%s(): %s", \
+  fprintf(stderr, SD_ERR "%s(): %s", \
           __func__, txt);
 
 #define NOTICE_COMMENT(txt) \
-  fprintf(stderr, "%s", txt);
+  fprintf(stderr, SD_NOTICE "%s", txt);
 
 #endif
 
