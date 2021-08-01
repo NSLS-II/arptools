@@ -33,10 +33,10 @@ arpwatch ARP packet monitor
 
 %build
 %cmake -DCPPLINT_CHECK=0 -DNO_IN_SOURCE_BUILDS=NO
-%__cmake --build .
+make
 
 %install
-%__cmake --install .
+make install
 
 %post
 %systemd_post arpwatch.service
