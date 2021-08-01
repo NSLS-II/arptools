@@ -3,11 +3,11 @@
 
 %global _hardened_build 1
 %global debug_package %{nil}
-
+%global __cmake cmake3
 
 Name:           arptools
 Version:        %{version}
-Release:        0%{?dist}
+Release:        1%{?dist}
 Summary:        arpwatch ARP packet monitor
 
 License:        BSD
@@ -24,7 +24,6 @@ BuildRequires:  systemd-devel
 %{?el8:BuildRequires:  systemd-rpm-macros}
 Requires:       libpcap
 Requires:       libnet
-
 
 %description
 arpwatch ARP packet monitor
