@@ -15,13 +15,13 @@ URL:            https://github.com/NSLS-II/arptools
 Source0:        https://github.com/NSLS-II/arptools/archive/%v{version}/arptools-v%{version}.tar.gz
 
 BuildRequires:  cmake
-BuildRequires:  systemd-rpm-macros
 BuildRequires:  libpcap-devel
 BuildRequires:  libnet-devel
 BuildRequires:  libconfig-devel
 BuildRequires:  mariadb-devel
-BuildRequires:  mariadb-connector-c-devel
 BuildRequires:  systemd-devel
+%{?el8:BuildRequires:  mariadb-connector-c-devel}
+%{?el8:BuildRequires:  systemd-rpm-macros}
 Requires:       libpcap
 Requires:       libnet
 
