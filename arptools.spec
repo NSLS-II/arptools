@@ -36,7 +36,7 @@ cmake3 -S . -B build -DCPPLINT_CHECK=0 -DNO_IN_SOURCE_BUILDS=NO
 cmake3 --build build
 
 %install
-make install
+cmake3 --install build
 
 %post
 %systemd_post arpwatch.service
