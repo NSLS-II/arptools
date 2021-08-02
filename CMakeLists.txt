@@ -54,6 +54,10 @@ option(DEBUG                "Show debug comments" OFF)
 option(SYSTEMD              "Compile as systemd daemon" ON)
 option(NO_IN_SOURCE_BUILDS  "Prevent in source builds" ON)
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
 if(NO_IN_SOURCE_BUILDS)
   include(PreventInSourceBuilds)
 endif()
@@ -61,8 +65,12 @@ endif()
 # Add options
 # add_compile_options(-fPIE)
 
+set(CMAKE_C_FLAGS_DEBUG "-g")
+set(CMAKE_C_FLAGS_RELEASE "-O3")
+
 if(PEDANTIC)
   add_compile_options(-pedantic -Wall -Wextra -Werror)
+  add_compile_options(-Wno-stringop-truncation)
 endif()
 
 if(DEBUG)

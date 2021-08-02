@@ -43,7 +43,8 @@
 #define ARPWATCH_CONFIG_FILE             "/etc/arpwatch.conf"
 #define ARPWATCH_CONFIG_MAX_STRING       2048
 // #define ARPWATCH_PCAP_PROGRAM            "(arp[6:2] = 2)"
-#define ARPWATCH_PCAP_PROGRAM            "arp"
+// #define ARPWATCH_PCAP_PROGRAM            "arp"
+#define ARPWATCH_PCAP_PROGRAM            "(ether broadcast) || arp"
 #define ARPWATCH_PCAP_TIMEOUT            5
 #define ARPWATCH_ARP_DELAY               50000
 #define ARPWATCH_ARP_LOOP_DELAY          300

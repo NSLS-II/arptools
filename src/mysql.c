@@ -78,7 +78,7 @@ void * mysql_thread(void * arg) {
     arp_data *arp = fifo_get_tail(&(params->data_fifo), 0);
 
     while (arp) {
-      char sql_buffer[10000];
+      char sql_buffer[100000];
       char time_buffer[256];
       char hostname[256];
 
@@ -111,24 +111,50 @@ void * mysql_thread(void * arg) {
       const char *hw_addr = int_to_mac(arp->hw_addr);
       const char *ip_addr = inet_ntoa(arp->ip_addr);
 
-      snprintf(sql_buffer, sizeof(sql_buffer),
-              "INSERT INTO arpdata "
-              "(hw_address, ip_address, location, label, last_seen, hostname) "
-              "VALUES ('%s', '%s', '%s', '%s', '%s', '%s') "
-              "ON DUPLICATE KEY UPDATE "
-              "ip_address = '%s', "
-              "location = '%s', "
-              "label = '%s', "
-              "last_seen = '%s', "
-              "hostname = '%s'",
-              hw_addr,
-              ip_addr, params->location, params->label, time_buffer, hostname,
-              ip_addr, params->location, params->label, time_buffer, hostname);
+      if ((arp->type == FIFO_TYPE_ARP_SRC) ||
+          (arp->type == FIFO_TYPE_ARP_DST) ||
+          (arp->type == FIFO_TYPE_UDP)) {
+        snprintf(sql_buffer, sizeof(sql_buffer),
+                "INSERT INTO arpdata "
+                "(hw_address, ip_address, location, "
+                "label, last_seen, hostname) "
+                "VALUES ('%s', '%s', '%s', '%s', '%s', '%s') "
+                "ON DUPLICATE KEY UPDATE "
+                "ip_address = '%s', "
+                "location = '%s', "
+                "label = '%s', "
+                "last_seen = '%s', "
+                "hostname = '%s'",
+                hw_addr,
+                ip_addr, params->location, params->label,
+                time_buffer, hostname,
+                ip_addr, params->location, params->label,
+                time_buffer, hostname);
 
-      DEBUG_PRINT("SQL query : %s\n", sql_buffer);
+        DEBUG_PRINT("ARP/BCAST %d SQL query : %s\n", arp->type, sql_buffer);
 
-      if (mysql_real_query(con, sql_buffer, strlen(sql_buffer))) {
-        mysql_print_error(con);
+        if (mysql_real_query(con, sql_buffer, strlen(sql_buffer))) {
+          mysql_print_error(con);
+        }
+      } else if (arp->type == FIFO_TYPE_DHCP) {
+        snprintf(sql_buffer, sizeof(sql_buffer),
+                "INSERT INTO arpdata "
+                "(hw_address, location, label, last_seen, dhcp_name) "
+                "VALUES ('%s', '%s', '%s', '%s', '%s') "
+                "ON DUPLICATE KEY UPDATE "
+                "location = '%s', "
+                "label = '%s', "
+                "last_seen = '%s', "
+                "dhcp_name = '%s'",
+                hw_addr,
+                params->location, params->label, time_buffer, arp->dhcp_name,
+                params->location, params->label, time_buffer, arp->dhcp_name);
+
+        DEBUG_PRINT("DNS NAME SQL query : %s\n", sql_buffer);
+
+        if (mysql_real_query(con, sql_buffer, strlen(sql_buffer))) {
+          mysql_print_error(con);
+        }
       }
 
       fifo_advance_tail(&(params->data_fifo));

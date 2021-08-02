@@ -58,40 +58,36 @@
 
 pcap_t *pcap_description = NULL;
 
-void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr,
-                     const u_char* packet) {
-  struct ether_header *eptr;
-  struct arphdr *aptr;
+int capture_arp_packet(arpwatch_params *params,
+                       const struct pcap_pkthdr* pkthdr,
+                       const u_char* packet) {
+  struct arphdr *aptr = (struct arphdr *)(packet +
+                         sizeof(struct ether_header));
   struct arpbdy *bptr;
 
-  arpwatch_params *params = (arpwatch_params*)args;
-  fifo *data = &params->data_fifo;
-
-  eptr = (struct ether_header *) packet;
-
-  // Check for ARP Packets
-
-  if (ntohs(eptr->ether_type) != ETHERTYPE_ARP) {
-    return;
+  if (ntohs(aptr->ar_pro) != 0x0800) {
+    ERROR_PRINT("%s: Bad ARP Packet (not IPV4)\n", params->iface);
+    return -1;
   }
 
-  aptr = (struct arphdr *) (packet + sizeof(struct ether_header));
-
-  if (ntohs(aptr->ar_pro) != 0x0800) {  // IPV4
-    return;
-  }
-
-  if (ntohs(aptr->ar_hrd) != ARPHRD_ETHER) {  // IPV4
-    return;
+  if (ntohs(aptr->ar_hrd) != ARPHRD_ETHER) {
+    ERROR_PRINT("%s: Bad ARP Packet (not ETHER)\n", params->iface);
+    return -1;
   }
 
   if (aptr->ar_hln != ETH_ALEN) {
-    return;
+    ERROR_PRINT("%s: Bad ARP Packet (Invalid Hardware Address)\n",
+                params->iface);
+    return -1;
   }
 
   if (aptr->ar_pln != sizeof(struct in_addr)) {
-    return;
+    ERROR_PRINT("%s: Bad ARP Packet (Invalid IP Address)\n",
+                params->iface);
+    return -1;
   }
+
+  fifo *data = &params->data_fifo;
 
   if ((htons(aptr->ar_op) == ARPOP_REPLY) ||
       (htons(aptr->ar_op) == ARPOP_REQUEST)) {
@@ -107,9 +103,11 @@ void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr,
                   inet_ntoa(bptr->ar_sip));
 
       arp_data *d = fifo_get_head(data);
+      d->type = FIFO_TYPE_ARP_SRC;
       d->ip_addr = bptr->ar_sip;
       memcpy(d->hw_addr, bptr->ar_sha, ETH_ALEN);
       d->ts = pkthdr->ts;
+      *(d->dhcp_name) = '\0';
       fifo_advance_head(data);
 
       if (htons(aptr->ar_op) == ARPOP_REPLY) {
@@ -120,14 +118,137 @@ void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr,
                     inet_ntoa(bptr->ar_tip));
 
         arp_data *d = fifo_get_head(data);
+        d->type = FIFO_TYPE_ARP_DST;
         d->ip_addr = bptr->ar_tip;
         memcpy(d->hw_addr, bptr->ar_tha, ETH_ALEN);
         d->ts = pkthdr->ts;
+        *(d->dhcp_name) = '\0';
         fifo_advance_head(data);
       }
     } else {
       DEBUG_COMMENT("Skipping packet ... MAC matches host\n");
     }
+  }
+
+  return 0;
+}
+
+int capture_ip_packet(arpwatch_params *params,
+                       const struct pcap_pkthdr* pkthdr,
+                       const u_char* packet) {
+  struct ether_header *eptr = (struct ether_header *) packet;
+  struct ipbdy *iptr = (struct ipbdy *) (packet + sizeof(struct ether_header));
+  DEBUG_PRINT("Iface : %s Packet time : %ld Broadcast Source:  %-20s %-16s\n",
+              params->iface,
+              pkthdr->ts.tv_sec,
+              ether_ntoa((const struct ether_addr *)&eptr->ether_shost),
+              inet_ntoa(iptr->ip_sip));
+
+  fifo *data = &params->data_fifo;
+
+  arp_data *d = fifo_get_head(data);
+  // Set type to UDP, we will overwrite later
+  d->type = FIFO_TYPE_UDP;
+
+  // Process IP Address
+  d->ip_addr = iptr->ip_sip;
+
+  // Process MAC Address
+  memcpy(d->hw_addr, eptr->ether_shost, ETH_ALEN);
+  d->ts = pkthdr->ts;
+  *(d->dhcp_name) = '\0';
+
+  // Further process to determine type
+
+  if (iptr->proto == IP_PROTO_UDP) {
+    // We have a UDP Packet
+    struct udphdr *uptr = (struct udphdr *)(packet
+                          + sizeof(struct ether_header)
+                          + sizeof(struct ipbdy));
+    DEBUG_PRINT("Iface : %s %d UDP %d -> %d\n", params->iface,
+                sizeof(struct ipbdy),
+                htons(uptr->sport), htons(uptr->dport));
+
+    if ((htons(uptr->sport) == DHCP_DISCOVER_SPORT) &&
+        (htons(uptr->dport) == DHCP_DISCOVER_DPORT)) {
+      struct dhcpbdy *dptr = (struct dhcpbdy *)(packet
+                             + sizeof(struct ether_header)
+                             + sizeof(struct ipbdy)
+                             + sizeof(struct udphdr));
+
+      DEBUG_PRINT("DHCP OP = %d Transaction ID = 0x%0X Cookie 0x%0X\n",
+                  dptr->op,
+                  ntohl(dptr->xid),
+                  ntohl(dptr->cookie));
+
+      // Set to DHCP type
+      d->type = FIFO_TYPE_DHCP;
+
+      // Set default hostname
+
+      strncpy(d->dhcp_name, "(none)", FIFO_NAME_MAX);
+
+      // Ok now we can process options.
+
+      u_char *optr = (u_char *)(packet
+                     + sizeof(struct ether_header)
+                     + sizeof(struct ipbdy)
+                     + sizeof(struct udphdr)
+                     + sizeof(struct dhcpbdy));
+
+      int pos = sizeof(struct ether_header)
+                + sizeof(struct ipbdy)
+                + sizeof(struct udphdr)
+                + sizeof(struct dhcpbdy);
+
+      while ((int)pkthdr->len > pos) {
+        uint8_t code = *optr;
+        optr++;
+        uint8_t len = *optr;
+        optr++;
+
+        DEBUG_PRINT("DHCP OPTION %d\n", code);
+
+        if (code == DHCP_OPCODE_END) {
+          break;
+        } else if (code == DHCP_OPCODE_HOSTNAME) {
+          char _name[FIFO_NAME_MAX];
+          if (len < (sizeof(_name)- 1)) {
+            memcpy(_name, optr, len);
+            _name[len] = '\0';  // Null terminate
+            strncpy(d->dhcp_name, _name, FIFO_NAME_MAX);
+            DEBUG_PRINT("DHCP Hostname : %s\n", _name);
+          } else {
+            ERROR_COMMENT("DHCP Name too long\n");
+          }
+        }
+
+        optr += len;
+        pos += 2 + len;
+      }
+    }
+  }
+
+  fifo_advance_head(data);
+
+  return 0;
+}
+
+void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr,
+                     const u_char* packet) {
+  arpwatch_params *params = (arpwatch_params*)args;
+
+  struct ether_header *eptr = (struct ether_header *) packet;
+  uint16_t type = ntohs(eptr->ether_type);
+
+  if (type == ETHERTYPE_IP) {
+    DEBUG_COMMENT("Process IP Packet\n");
+    capture_ip_packet(params, pkthdr, packet);
+  } else if (ntohs(eptr->ether_type) == ETHERTYPE_ARP) {
+    DEBUG_COMMENT("Process ARP Packet\n");
+    capture_arp_packet(params, pkthdr, packet);
+  } else {
+    ERROR_PRINT("Invalid Packet type %d\n", type);
   }
 }
 

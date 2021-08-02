@@ -39,5 +39,6 @@
 #define SRC_UTILS_H_
 
 const char * int_to_mac(unsigned char *addr);
+int netbios_decode(char *dec, char *enc, int len);
 
 #endif  // SRC_UTILS_H_

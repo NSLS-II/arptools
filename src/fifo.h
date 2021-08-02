@@ -44,10 +44,22 @@
 #include <arpa/inet.h>
 #include <net/ethernet.h>
 
+/* Macro Definitions */
+
+#define FIFO_ERR_MEMORY        1
+#define FIFO_NOERR             0
+#define FIFO_NAME_MAX          256
+#define FIFO_TYPE_ARP_SRC      0x00
+#define FIFO_TYPE_ARP_DST      0x01
+#define FIFO_TYPE_UDP          0x02
+#define FIFO_TYPE_DHCP         0x04
+
 typedef struct {
   unsigned char hw_addr[ETH_ALEN];
   struct in_addr ip_addr;
   struct timeval ts;
+  int type;
+  char dhcp_name[FIFO_NAME_MAX];
 } arp_data;
 
 typedef struct {
@@ -66,11 +78,6 @@ typedef struct {
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/* Macro Definitions */
-
-#define FIFO_ERR_MEMORY 1
-#define FIFO_NOERR      0
 
 /* FIFO Functions */
 

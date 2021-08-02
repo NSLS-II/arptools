@@ -41,11 +41,79 @@
 
 #include <net/ethernet.h>
 
+#define DHCP_SNLEN            64
+#define DHCP_BFLEN            128
+#define IP_PROTO_UDP          0x11
+#define DHCP_DISCOVER_SPORT   68
+#define DHCP_DISCOVER_DPORT   67
+#define DHCP_HWLEN            16
+#define DHCP_OPCODE_HOSTNAME  12
+#define DHCP_OPCODE_END       255
+#define NETBIOS_NAMELEN       32
+#define NETBIOS_PORT          137
+
 struct arpbdy {
   unsigned char ar_sha[ETH_ALEN];
   struct in_addr ar_sip;
   unsigned char ar_tha[ETH_ALEN];
   struct in_addr ar_tip;
+} __attribute__((__packed__));
+
+struct ipbdy {
+  uint8_t  ver_ihl;          // Version (4 bits) + header (4 bits)
+  uint8_t  tos;              // Type of service
+  uint16_t tlen;             // Total length
+  uint16_t identification;   // Identification
+  uint16_t flags_fo;         // Flags (3 bits) + Fragment offset (13 bits)
+  uint8_t  ttl;              // Time to live
+  uint8_t  proto;            // Protocol
+  uint16_t crc;              // Header checksum
+  struct in_addr ip_sip;     // Source address
+  struct in_addr ip_dip;     // Destination address
+  // uint32_t op_pad;           // Option + Padding
+} __attribute__((__packed__));
+
+struct udphdr {
+  uint16_t sport;
+  uint16_t dport;
+  uint16_t len;
+  uint16_t checksum;
+} __attribute__((__packed__));
+
+struct dhcpbdy {
+  uint8_t op;                        // Operation Code
+  uint8_t htype;                     // Hardware Type (same as ARP)
+  uint8_t hlen;                      // Hardware Address Length
+  uint8_t hops;                      // Hops for forwarding
+  uint32_t xid;                      // Transaction Identifier
+  uint16_t secs;                     // Seconds (Seconds since attempt)
+  uint16_t flags;                    // Broadcast Flag
+  struct in_addr ip_cip;             // Client IP Address
+  struct in_addr ip_yip;             // Your IP Address
+  struct in_addr ip_sip;             // Server IP Address
+  struct in_addr ip_gip;             // Gateway IP Address
+  uint8_t hwaddr[ETH_ALEN];          // Client HW Address
+  uint8_t hwaddr_padding[DHCP_HWLEN - ETH_ALEN];  // Padding
+  char server_name[DHCP_SNLEN];      // Server Name
+  char boot_filename[DHCP_BFLEN];    // Boot Filename
+  uint32_t cookie;                   // Magic Cookie
+} __attribute__((__packed__));
+
+struct netbioshdr {
+  uint16_t trans_id;
+  uint16_t flags;
+  uint16_t n_queries;
+  uint16_t n_answer;
+  uint16_t n_authority;
+  uint16_t n_additional;
+} __attribute__((__packed__));
+
+struct netbiosbdy {
+  uint8_t len;
+  char name[NETBIOS_NAMELEN];
+  char zero;
+  uint16_t type;
+  uint16_t _class;
 } __attribute__((__packed__));
 
 int capture_start(arpwatch_params *params);

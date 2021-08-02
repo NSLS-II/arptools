@@ -55,3 +55,48 @@ const char * int_to_mac(unsigned char *addr) {
 
   return _mac;
 }
+
+int netbios_decode(char *dec, char *enc, int len) {
+  char *pdec;
+  char _c;
+  char __c;
+  int index = 0;
+
+  pdec = enc;
+  while (index < (len / 2)) {
+    // NETBIOS uses 2 chars for each real char
+    _c = *pdec;
+    if (_c == '\0') {
+      break;  // Null char
+    }
+    if (_c == '.') {
+      break;  // Break for scope ID
+    }
+    if (_c < 'A' || _c > 'Z') {
+      // Illegal chars
+      return -1;
+    }
+
+    _c -= 'A';
+    __c = _c << 4;
+    pdec++;
+
+    _c = *pdec;
+    if (_c == '\0' || _c == '.') {
+      // No more characters in the name - but we're in
+      // the middle of a pair.  Not legal.
+      return -1;
+    }
+    if (_c < 'A' || _c > 'Z') {
+      // Not legal.
+      return -1;
+    }
+    _c -= 'A';
+    __c |= _c;
+    pdec++;
+
+    dec[index++] = (__c != ' '?__c:'\0');
+  }
+
+  return 0;
+}
