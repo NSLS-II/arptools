@@ -171,15 +171,16 @@ int capture_ip_packet(arpwatch_params *params,
 
     if ((htons(uptr->sport) == DHCP_DISCOVER_SPORT) &&
         (htons(uptr->dport) == DHCP_DISCOVER_DPORT)) {
+#ifdef DEBUG
       struct dhcpbdy *dptr = (struct dhcpbdy *)(packet
                              + sizeof(struct ether_header)
                              + sizeof(struct ipbdy)
                              + sizeof(struct udphdr));
-
       DEBUG_PRINT("DHCP OP = %d Transaction ID = 0x%0X Cookie 0x%0X\n",
                   dptr->op,
                   ntohl(dptr->xid),
                   ntohl(dptr->cookie));
+#endif
 
       // Set to DHCP type
       d->type = FIFO_TYPE_DHCP;
@@ -244,7 +245,7 @@ void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr,
   if (type == ETHERTYPE_IP) {
     DEBUG_COMMENT("Process IP Packet\n");
     capture_ip_packet(params, pkthdr, packet);
-  } else if (ntohs(eptr->ether_type) == ETHERTYPE_ARP) {
+  } else if (type == ETHERTYPE_ARP) {
     DEBUG_COMMENT("Process ARP Packet\n");
     capture_arp_packet(params, pkthdr, packet);
   } else {
