@@ -2,7 +2,6 @@
 FROM centos:7
 #RUN yum install -y 'yum-command(config-manager)'
 RUN yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-#RUN yum config-manager --set-enabled powertools
 RUN yum -y update
 RUN yum -y group install "Development Tools"
 RUN yum -y install cmake3 \
@@ -10,4 +9,3 @@ RUN yum -y install cmake3 \
                    mariadb-devel systemd-devel pkg-config
 RUN yum -y install python3-pip
 RUN pip3 install cpplint
-RUN pkg-config systemd --print-variables | less
