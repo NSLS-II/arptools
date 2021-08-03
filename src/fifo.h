@@ -53,6 +53,7 @@
 #define FIFO_TYPE_ARP_DST      0x01
 #define FIFO_TYPE_UDP          0x02
 #define FIFO_TYPE_DHCP         0x04
+#define FIFO_TYPE_UNKNOWN      0x08
 
 typedef struct {
   unsigned char hw_addr[ETH_ALEN];

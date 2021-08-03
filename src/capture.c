@@ -133,11 +133,79 @@ int capture_arp_packet(arpwatch_params *params,
   return 0;
 }
 
+int capture_dhcp_packet(arpwatch_params *params,
+                        const struct pcap_pkthdr* pkthdr,
+                        const u_char* packet) {
+  fifo *data = &params->data_fifo;
+  arp_data *d = fifo_get_head(data);
+
+#ifdef DEBUG
+  struct dhcpbdy *dptr = (struct dhcpbdy *)(packet
+                          + sizeof(struct ether_header)
+                          + sizeof(struct ipbdy)
+                          + sizeof(struct udphdr));
+  DEBUG_PRINT("DHCP OP = %d Transaction ID = 0x%0X Cookie 0x%0X\n",
+              dptr->op,
+              ntohl(dptr->xid),
+              ntohl(dptr->cookie));
+#endif
+
+  // Set to DHCP type
+  d->type = FIFO_TYPE_DHCP;
+
+  // Set default hostname
+  strncpy(d->dhcp_name, "(none)", FIFO_NAME_MAX);
+
+  // Ok now we can process options.
+
+  u_char *optr = (u_char *)(packet
+                  + sizeof(struct ether_header)
+                  + sizeof(struct ipbdy)
+                  + sizeof(struct udphdr)
+                  + sizeof(struct dhcpbdy));
+
+  int pos = sizeof(struct ether_header)
+            + sizeof(struct ipbdy)
+            + sizeof(struct udphdr)
+            + sizeof(struct dhcpbdy);
+
+  while ((int)pkthdr->len > pos) {
+    uint8_t code = *optr;
+    optr++;
+    uint8_t len = *optr;
+    optr++;
+
+    DEBUG_PRINT("DHCP OPTION %d\n", code);
+
+    if (code == DHCP_OPCODE_END) {
+      break;
+    } else if (code == DHCP_OPCODE_HOSTNAME) {
+      char _name[FIFO_NAME_MAX];
+      if (len < (sizeof(_name)- 1)) {
+        memcpy(_name, optr, len);
+        _name[len] = '\0';  // Null terminate
+        strncpy(d->dhcp_name, _name, FIFO_NAME_MAX);
+        DEBUG_PRINT("DHCP Hostname : %s\n", _name);
+      } else {
+        ERROR_COMMENT("DHCP Name too long\n");
+      }
+    }
+
+    optr += len;
+    pos += 2 + len;
+  }
+
+  return 0;
+}
+
 int capture_ip_packet(arpwatch_params *params,
                        const struct pcap_pkthdr* pkthdr,
                        const u_char* packet) {
   struct ether_header *eptr = (struct ether_header *) packet;
   struct ipbdy *iptr = (struct ipbdy *) (packet + sizeof(struct ether_header));
+
+  // Process any IP Packets that are broadcast
+
   DEBUG_PRINT("Iface : %s Packet time : %ld Broadcast Source:  %-20s %-16s\n",
               params->iface,
               pkthdr->ts.tv_sec,
@@ -145,10 +213,10 @@ int capture_ip_packet(arpwatch_params *params,
               inet_ntoa(iptr->ip_sip));
 
   fifo *data = &params->data_fifo;
-
   arp_data *d = fifo_get_head(data);
+
   // Set type to UDP, we will overwrite later
-  d->type = FIFO_TYPE_UDP;
+  d->type = FIFO_TYPE_UNKNOWN;
 
   // Process IP Address
   d->ip_addr = iptr->ip_sip;
@@ -156,6 +224,8 @@ int capture_ip_packet(arpwatch_params *params,
   // Process MAC Address
   memcpy(d->hw_addr, eptr->ether_shost, ETH_ALEN);
   d->ts = pkthdr->ts;
+
+  // Null out the DHCP name
   *(d->dhcp_name) = '\0';
 
   // Further process to determine type
@@ -165,68 +235,16 @@ int capture_ip_packet(arpwatch_params *params,
     struct udphdr *uptr = (struct udphdr *)(packet
                           + sizeof(struct ether_header)
                           + sizeof(struct ipbdy));
+
+    d->type = FIFO_TYPE_UDP;
+
     DEBUG_PRINT("Iface : %s %d UDP %d -> %d\n", params->iface,
                 sizeof(struct ipbdy),
                 htons(uptr->sport), htons(uptr->dport));
 
     if ((htons(uptr->sport) == DHCP_DISCOVER_SPORT) &&
         (htons(uptr->dport) == DHCP_DISCOVER_DPORT)) {
-#ifdef DEBUG
-      struct dhcpbdy *dptr = (struct dhcpbdy *)(packet
-                             + sizeof(struct ether_header)
-                             + sizeof(struct ipbdy)
-                             + sizeof(struct udphdr));
-      DEBUG_PRINT("DHCP OP = %d Transaction ID = 0x%0X Cookie 0x%0X\n",
-                  dptr->op,
-                  ntohl(dptr->xid),
-                  ntohl(dptr->cookie));
-#endif
-
-      // Set to DHCP type
-      d->type = FIFO_TYPE_DHCP;
-
-      // Set default hostname
-
-      strncpy(d->dhcp_name, "(none)", FIFO_NAME_MAX);
-
-      // Ok now we can process options.
-
-      u_char *optr = (u_char *)(packet
-                     + sizeof(struct ether_header)
-                     + sizeof(struct ipbdy)
-                     + sizeof(struct udphdr)
-                     + sizeof(struct dhcpbdy));
-
-      int pos = sizeof(struct ether_header)
-                + sizeof(struct ipbdy)
-                + sizeof(struct udphdr)
-                + sizeof(struct dhcpbdy);
-
-      while ((int)pkthdr->len > pos) {
-        uint8_t code = *optr;
-        optr++;
-        uint8_t len = *optr;
-        optr++;
-
-        DEBUG_PRINT("DHCP OPTION %d\n", code);
-
-        if (code == DHCP_OPCODE_END) {
-          break;
-        } else if (code == DHCP_OPCODE_HOSTNAME) {
-          char _name[FIFO_NAME_MAX];
-          if (len < (sizeof(_name)- 1)) {
-            memcpy(_name, optr, len);
-            _name[len] = '\0';  // Null terminate
-            strncpy(d->dhcp_name, _name, FIFO_NAME_MAX);
-            DEBUG_PRINT("DHCP Hostname : %s\n", _name);
-          } else {
-            ERROR_COMMENT("DHCP Name too long\n");
-          }
-        }
-
-        optr += len;
-        pos += 2 + len;
-      }
+      capture_dhcp_packet(params, pkthdr, packet);
     }
   }
 
