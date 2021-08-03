@@ -114,22 +114,39 @@ void * mysql_thread(void * arg) {
       if ((arp->type == FIFO_TYPE_ARP_SRC) ||
           (arp->type == FIFO_TYPE_ARP_DST) ||
           (arp->type == FIFO_TYPE_UDP)) {
+        int type_arp = 0;
+        int type_udp = 0;
+
+        if ((arp->type == FIFO_TYPE_ARP_SRC) ||
+            (arp->type == FIFO_TYPE_ARP_DST)) {
+          type_arp = 1;
+        }
+        if (arp->type == FIFO_TYPE_UDP) {
+          type_udp = 1;
+        }
+
         snprintf(sql_buffer, sizeof(sql_buffer),
                 "INSERT INTO arpdata "
                 "(hw_address, ip_address, location, "
-                "label, last_seen, hostname) "
-                "VALUES ('%s', '%s', '%s', '%s', '%s', '%s') "
+                "label, last_seen, hostname, "
+                "type_arp, type_udp) "
+                "VALUES ('%s', '%s', '%s', '%s', "
+                "'%s', '%s', %d, %d) "
                 "ON DUPLICATE KEY UPDATE "
                 "ip_address = '%s', "
                 "location = '%s', "
                 "label = '%s', "
                 "last_seen = '%s', "
-                "hostname = '%s'",
+                "hostname = '%s', "
+                "type_arp = %d, "
+                "type_udp = %d",
                 hw_addr,
                 ip_addr, params->location, params->label,
                 time_buffer, hostname,
+                type_arp, type_udp,
                 ip_addr, params->location, params->label,
-                time_buffer, hostname);
+                time_buffer, hostname,
+                type_arp, type_udp);
 
         DEBUG_PRINT("ARP/BCAST %d SQL query : %s\n", arp->type, sql_buffer);
 
@@ -139,13 +156,15 @@ void * mysql_thread(void * arg) {
       } else if (arp->type == FIFO_TYPE_DHCP) {
         snprintf(sql_buffer, sizeof(sql_buffer),
                 "INSERT INTO arpdata "
-                "(hw_address, location, label, last_seen, dhcp_name) "
-                "VALUES ('%s', '%s', '%s', '%s', '%s') "
+                "(hw_address, location, label, "
+                "last_seen, dhcp_name, type_dhcp) "
+                "VALUES ('%s', '%s', '%s', '%s', '%s', true) "
                 "ON DUPLICATE KEY UPDATE "
                 "location = '%s', "
                 "label = '%s', "
                 "last_seen = '%s', "
-                "dhcp_name = '%s'",
+                "dhcp_name = '%s', "
+                "type_dhcp = true;",
                 hw_addr,
                 params->location, params->label, time_buffer, arp->dhcp_name,
                 params->location, params->label, time_buffer, arp->dhcp_name);
