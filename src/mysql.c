@@ -85,7 +85,6 @@ void * mysql_thread(void * arg) {
       struct tm gm;
       if (localtime_r(&(arp->ts.tv_sec), &gm)) {
         strftime(time_buffer, sizeof(time_buffer),
-
                 "%Y-%m-%d %H:%M:%S", &gm);
 
         DEBUG_PRINT("Packet time : %s\n", time_buffer);
@@ -113,7 +112,8 @@ void * mysql_thread(void * arg) {
 
       if ((arp->type == FIFO_TYPE_ARP_SRC) ||
           (arp->type == FIFO_TYPE_ARP_DST) ||
-          (arp->type == FIFO_TYPE_UDP)) {
+          (arp->type == FIFO_TYPE_UDP) ||
+          (arp->type == FIFO_TYPE_IP)) {
         int type_arp = 0;
         int type_udp = 0;
 
@@ -148,7 +148,7 @@ void * mysql_thread(void * arg) {
                 time_buffer, hostname,
                 type_arp, type_udp);
 
-        DEBUG_PRINT("ARP/BCAST %d SQL query : %s\n", arp->type, sql_buffer);
+        DEBUG_PRINT("ARP/IP/UDP %d SQL query : %s\n", arp->type, sql_buffer);
 
         if (mysql_real_query(con, sql_buffer, strlen(sql_buffer))) {
           mysql_print_error(con);
@@ -170,6 +170,25 @@ void * mysql_thread(void * arg) {
                 params->location, params->label, time_buffer, arp->dhcp_name);
 
         DEBUG_PRINT("DNS NAME SQL query : %s\n", sql_buffer);
+
+        if (mysql_real_query(con, sql_buffer, strlen(sql_buffer))) {
+          mysql_print_error(con);
+        }
+      } else if (arp->type == FIFO_TYPE_UNKNOWN) {
+        snprintf(sql_buffer, sizeof(sql_buffer),
+                "INSERT INTO arpdata "
+                "(hw_address, location, label, "
+                "last_seen) "
+                "VALUES ('%s', '%s', '%s', '%s') "
+                "ON DUPLICATE KEY UPDATE "
+                "location = '%s', "
+                "label = '%s', "
+                "last_seen = '%s';",
+                hw_addr,
+                params->location, params->label, time_buffer,
+                params->location, params->label, time_buffer);
+
+        DEBUG_PRINT("UNKNOWN NAME SQL query : %s\n", sql_buffer);
 
         if (mysql_real_query(con, sql_buffer, strlen(sql_buffer))) {
           mysql_print_error(con);

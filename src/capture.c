@@ -58,6 +58,38 @@
 
 pcap_t *pcap_description = NULL;
 
+int capture_ethernet_packet(arpwatch_params *params,
+                            const struct pcap_pkthdr* pkthdr,
+                            const u_char* packet) {
+  struct ether_header *eptr = (struct ether_header *) packet;
+  uint16_t type = ntohs(eptr->ether_type);
+
+  ERROR_PRINT("ETHERNET Packet type %d (0x%0X) from %s\n",
+              type, type,
+              ether_ntoa((const struct ether_addr *)&eptr->ether_shost));
+
+  fifo *data = &params->data_fifo;
+  arp_data *d = fifo_get_head(data);
+
+  d->type = FIFO_TYPE_UNKNOWN;
+  memcpy(d->hw_addr, eptr->ether_shost, ETH_ALEN);
+  d->ts = pkthdr->ts;
+
+  // Set DHCP to NULL
+
+  *(d->dhcp_name) = '\0';
+
+  // Set IP Address to zero
+
+  struct in_addr zero;
+  zero.s_addr = 0;
+  d->ip_addr = zero;
+
+  fifo_advance_head(data);
+
+  return 0;
+}
+
 int capture_arp_packet(arpwatch_params *params,
                        const struct pcap_pkthdr* pkthdr,
                        const u_char* packet) {
@@ -216,7 +248,7 @@ int capture_ip_packet(arpwatch_params *params,
   arp_data *d = fifo_get_head(data);
 
   // Set type to UDP, we will overwrite later
-  d->type = FIFO_TYPE_UNKNOWN;
+  d->type = FIFO_TYPE_IP;
 
   // Process IP Address
   d->ip_addr = iptr->ip_sip;
@@ -261,13 +293,12 @@ void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr,
   uint16_t type = ntohs(eptr->ether_type);
 
   if (type == ETHERTYPE_IP) {
-    DEBUG_COMMENT("Process IP Packet\n");
     capture_ip_packet(params, pkthdr, packet);
   } else if (type == ETHERTYPE_ARP) {
-    DEBUG_COMMENT("Process ARP Packet\n");
     capture_arp_packet(params, pkthdr, packet);
   } else {
-    ERROR_PRINT("Invalid Packet type %d\n", type);
+    // Fallback to just log MAC address
+    capture_ethernet_packet(params, pkthdr, packet);
   }
 }
 
