@@ -348,8 +348,10 @@ void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr,
     struct ethernet_header_8021q *_eptr =
         (struct ethernet_header_8021q *) packet;
     type = ntohs(_eptr->ether_type);
+#ifdef DEBUG
     uint16_t vlan = ether_get_vlan(packet);
     DEBUG_PRINT("TAGGED Packet type = 0x%0X vlan = %d\n", type, vlan);
+#endif
   }
 
   if (type == ETHERTYPE_IP) {
