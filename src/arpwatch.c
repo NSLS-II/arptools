@@ -121,7 +121,7 @@ int read_global_config(arpwatch_params *params) {
   }
 
   if (!config_lookup_bool(&cfg, "filter_self", &params->filter_self)) {
-    params->filter_self = -1;
+    params->filter_self = 0;
   }
 
   config_setting_t *setting = config_lookup(&cfg, "instances");
