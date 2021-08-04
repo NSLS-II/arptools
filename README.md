@@ -10,7 +10,7 @@
 
 ### RedHat
 
-```
+```bash
 yum install libpcap-devel libnet-devel libconfig-devel mariadb-connector-c-devel
 mkdir build && cd build
 cmake ..
@@ -20,7 +20,7 @@ make install
 
 ### Debian
 
-```
+```bash
 apt install libmariadb-dev-compat libpcap-dev libnet-dev libconfig-dev cmake
 mkdir build && cd build
 cmake ..
@@ -30,7 +30,7 @@ make install
 
 ## Configuration
 
-```
+```json
 database = "arptools";
 username = "arptools";
 password = "password";
@@ -48,6 +48,6 @@ instances = (
     ipaddress = "10.10.0.0";
     subnet = "255.255.255.0";
     label = "subnet2";
-	}
+  }
 );
 ```
