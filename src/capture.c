@@ -71,7 +71,7 @@ int ether_header_size(const u_char *packet) {
 uint16_t ether_get_vlan(const u_char *packet) {
   struct ethernet_header *hdr = (struct ethernet_header *)packet;
 
-  uint16_t vlan = 0x1000;  // Tag this with an impossible VLAN!
+  uint16_t vlan = NO_VLAN_TAG;
   if (ntohs(hdr->ether_type) == ETHERTYPE_8021Q) {
     struct ethernet_header_8021q *vlan_hdr =
       (struct ethernet_header_8021q *)packet;
