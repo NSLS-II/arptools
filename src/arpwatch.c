@@ -222,7 +222,7 @@ int main(int argc, char *argv[]) {
   DEBUG_PRINT("git branch  = %s\n", ARPTOOLS_GIT_BRANCH);
   DEBUG_PRINT("git version = %s\n", ARPTOOLS_GIT_VERSION);
 
-  NOTICE_PRINT("Startup (%s)\n", ARPTOOLS_GIT_VERSION);
+  NOTICE_PRINT("Startup (version = %s)\n", ARPTOOLS_GIT_VERSION);
 
   strncpy(params.program,
           ARPWATCH_PCAP_PROGRAM,
