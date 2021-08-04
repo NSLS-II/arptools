@@ -52,6 +52,20 @@
 #define NETBIOS_NAMELEN       32
 #define NETBIOS_PORT          137
 
+struct ethernet_header {
+  uint8_t ether_dhost[ETH_ALEN];
+  uint8_t ether_shost[ETH_ALEN];
+  uint16_t ether_type;
+} __attribute__((__packed__));
+
+struct ethernet_header_dot1q {
+  uint8_t ether_dhost[ETH_ALEN];
+  uint8_t ether_shost[ETH_ALEN];
+  uint16_t tpid;
+  uint16_t tci;
+  uint16_t ether_type;
+} __attribute__((__packed__));
+
 struct arpbdy {
   unsigned char ar_sha[ETH_ALEN];
   struct in_addr ar_sip;
