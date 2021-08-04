@@ -49,6 +49,7 @@
 #define ARPWATCH_ARP_DELAY               50000
 #define ARPWATCH_ARP_LOOP_DELAY          300
 #define ARPWATCH_MYSQL_LOOP_DELAY        120
+#define ARPWATCH_BUFFER_SIZE             1000000
 
 typedef struct {
   int num_instance;
@@ -57,6 +58,7 @@ typedef struct {
   int arp_loop_delay;
   int pcap_timeout;
   int filter_self;
+  int buffer_size;
   buffer_data data_buffer;
   char program[ARPWATCH_CONFIG_MAX_STRING];
   char iface[ARPWATCH_CONFIG_MAX_STRING];

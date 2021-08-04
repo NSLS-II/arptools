@@ -124,6 +124,10 @@ int read_global_config(arpwatch_params *params) {
     params->filter_self = 0;
   }
 
+  if (!config_lookup_int(&cfg, "buffer_size", &params->buffer_size)) {
+    params->buffer_size = ARPWATCH_BUFFER_SIZE;
+  }
+
   config_setting_t *setting = config_lookup(&cfg, "instances");
   if (setting == NULL) {
     ERROR_COMMENT("No instances in config file.\n");
@@ -245,7 +249,8 @@ int main(int argc, char *argv[]) {
 
       // Setup Buffer
 
-      if (buffer_init(&(params.data_buffer), 1000000, 1) != BUFFER_NOERR) {
+      if (buffer_init(&(params.data_buffer),
+                      params.buffer_size, 1) != BUFFER_NOERR) {
         ERROR_COMMENT("buffer_init(): ERROR");
         exit(EXIT_FAILURE);
       }
