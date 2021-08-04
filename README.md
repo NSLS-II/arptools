@@ -28,6 +28,10 @@ make
 make install
 ```
 
+## Database Schema
+
+[MySQL Database Schema](mysql/create_database.sql)
+
 ## Configuration
 
 ```json
