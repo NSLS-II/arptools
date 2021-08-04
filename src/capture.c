@@ -64,7 +64,7 @@ int capture_ethernet_packet(arpwatch_params *params,
   struct ether_header *eptr = (struct ether_header *) packet;
   uint16_t type = ntohs(eptr->ether_type);
 
-  ERROR_PRINT("ETHERNET Packet type %d (0x%0X) from %s\n",
+  DEBUG_PRINT("ETHERNET Packet type %d (0x%0X) from %s\n",
               type, type,
               ether_ntoa((const struct ether_addr *)&eptr->ether_shost));
 
