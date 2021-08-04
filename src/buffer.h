@@ -61,6 +61,7 @@ typedef struct {
   struct in_addr ip_addr;
   struct timeval ts;
   int type;
+  uint16_t vlan;
   char dhcp_name[BUFFER_NAME_MAX];
 } arp_data;
 

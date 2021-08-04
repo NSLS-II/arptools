@@ -58,6 +58,31 @@
 
 pcap_t *pcap_description = NULL;
 
+int ether_header_size(const u_char *packet) {
+  struct ethernet_header *hdr = (struct ethernet_header *)packet;
+  if (ntohs(hdr->ether_type) == ETHERTYPE_8021Q) {
+    // Tagged packet
+    return sizeof(struct ethernet_header_8021q);
+  } else {
+    return sizeof(struct ethernet_header);
+  }
+}
+
+uint16_t ether_get_vlan(const u_char *packet) {
+  struct ethernet_header *hdr = (struct ethernet_header *)packet;
+
+  uint16_t vlan = 0x1000;  // Tag this with an impossible VLAN!
+  if (ntohs(hdr->ether_type) == ETHERTYPE_8021Q) {
+    struct ethernet_header_8021q *vlan_hdr =
+      (struct ethernet_header_8021q *)packet;
+    vlan = ntohs(vlan_hdr->tci) & 0x0FFF;
+
+    DEBUG_PRINT("VLAN Tag = %d\n", vlan);
+  }
+
+  return vlan;
+}
+
 int capture_ethernet_packet(arpwatch_params *params,
                             const struct pcap_pkthdr* pkthdr,
                             const u_char* packet) {
@@ -87,81 +112,100 @@ int capture_ethernet_packet(arpwatch_params *params,
   struct in_addr zero;
   zero.s_addr = 0;
   d->ip_addr = zero;
+  d->vlan = ether_get_vlan(packet);
 
   buffer_advance_head(data, 1);
 
   return 0;
 }
 
-int capture_arp_packet(arpwatch_params *params,
-                       const struct pcap_pkthdr* pkthdr,
-                       const u_char* packet) {
-  struct arphdr *aptr = (struct arphdr *)(packet +
-                         sizeof(struct ether_header));
-  struct arpbdy *bptr;
-
+int ether_arp_is_ipv4(const struct arphdr *aptr) {
   if (ntohs(aptr->ar_pro) != 0x0800) {
-    ERROR_PRINT("%s: Bad ARP Packet (not IPV4)\n", params->iface);
-    return -1;
+    return 0;
   }
 
   if (ntohs(aptr->ar_hrd) != ARPHRD_ETHER) {
-    ERROR_PRINT("%s: Bad ARP Packet (not ETHER)\n", params->iface);
-    return -1;
+    return 0;
   }
 
   if (aptr->ar_hln != ETH_ALEN) {
-    ERROR_PRINT("%s: Bad ARP Packet (Invalid Hardware Address)\n",
-                params->iface);
-    return -1;
+    return 0;
   }
 
   if (aptr->ar_pln != sizeof(struct in_addr)) {
-    ERROR_PRINT("%s: Bad ARP Packet (Invalid IP Address)\n",
-                params->iface);
-    return -1;
+    return 0;
   }
 
-  buffer_data *data = &params->data_buffer;
+  return -1;
+}
 
-  if ((htons(aptr->ar_op) == ARPOP_REPLY) ||
-      (htons(aptr->ar_op) == ARPOP_REQUEST)) {
-    bptr = (struct arpbdy *) (packet +
-      sizeof(struct ether_header) + sizeof(struct arphdr));
+int capture_arp_packet(arpwatch_params *params,
+                       const struct pcap_pkthdr* pkthdr,
+                       const u_char* packet) {
+  struct ethernet_header *eptr = (struct ethernet_header *)packet;
+  struct arphdr *aptr = (struct arphdr *)(packet +
+                         ether_header_size(packet));
+  struct arpbdy *bptr;
 
-    if (memcmp(params->hwaddress, bptr->ar_sha, ETH_ALEN) ||
-        !params->filter_self) {
-      DEBUG_PRINT("Iface : %s Packet time : %ld ARP Source:  %-20s %-16s\n",
-                  params->iface,
-                  pkthdr->ts.tv_sec,
-                  ether_ntoa((const struct ether_addr *)&bptr->ar_sha),
-                  inet_ntoa(bptr->ar_sip));
+  if (!ether_arp_is_ipv4(aptr)) {
+    ERROR_PRINT("%s : Non IPV4 ARP Packet\n", params->iface);
 
-      arp_data *d = buffer_get_head(data);
-      d->type = BUFFER_TYPE_ARP_SRC;
-      d->ip_addr = bptr->ar_sip;
-      memcpy(d->hw_addr, bptr->ar_sha, ETH_ALEN);
-      d->ts = pkthdr->ts;
-      *(d->dhcp_name) = '\0';
-      buffer_advance_head(data, 1);
+    buffer_data *data = &params->data_buffer;
+    arp_data *d = buffer_get_head(data);
+    d->type = BUFFER_TYPE_UNKNOWN;
+    memcpy(d->hw_addr, eptr->ether_shost, ETH_ALEN);
+    d->ts = pkthdr->ts;
+    *(d->dhcp_name) = '\0';
+    d->vlan = ether_get_vlan(packet);
+    buffer_advance_head(data, 1);
+  } else {
+    // A Valid IPV4 ARP Packet
 
-      if (htons(aptr->ar_op) == ARPOP_REPLY) {
-        DEBUG_PRINT("Iface : %s Packet time : %ld ARP Dest  :  %-20s %-16s\n",
+    buffer_data *data = &params->data_buffer;
+
+    if ((htons(aptr->ar_op) == ARPOP_REPLY) ||
+        (htons(aptr->ar_op) == ARPOP_REQUEST)) {
+      bptr = (struct arpbdy *) (packet +
+                                ether_header_size(packet) +
+                                sizeof(struct arphdr));
+
+      if (memcmp(params->hwaddress, bptr->ar_sha, ETH_ALEN) ||
+          !params->filter_self) {
+        DEBUG_PRINT("Iface : %s Packet time : %ld ARP Source:  %-20s %-16s\n",
                     params->iface,
                     pkthdr->ts.tv_sec,
-                    ether_ntoa((const struct ether_addr *)&bptr->ar_tha),
-                    inet_ntoa(bptr->ar_tip));
+                    ether_ntoa((const struct ether_addr *)&bptr->ar_sha),
+                    inet_ntoa(bptr->ar_sip));
 
         arp_data *d = buffer_get_head(data);
-        d->type = BUFFER_TYPE_ARP_DST;
-        d->ip_addr = bptr->ar_tip;
-        memcpy(d->hw_addr, bptr->ar_tha, ETH_ALEN);
+        d->type = BUFFER_TYPE_ARP_SRC;
+        d->ip_addr = bptr->ar_sip;
+        memcpy(d->hw_addr, bptr->ar_sha, ETH_ALEN);
         d->ts = pkthdr->ts;
         *(d->dhcp_name) = '\0';
+        d->vlan = ether_get_vlan(packet);
+
         buffer_advance_head(data, 1);
+
+        if (htons(aptr->ar_op) == ARPOP_REPLY) {
+          DEBUG_PRINT("Iface : %s Packet time : %ld ARP Dest  :  %-20s %-16s\n",
+                      params->iface,
+                      pkthdr->ts.tv_sec,
+                      ether_ntoa((const struct ether_addr *)&bptr->ar_tha),
+                      inet_ntoa(bptr->ar_tip));
+
+          arp_data *d = buffer_get_head(data);
+          d->type = BUFFER_TYPE_ARP_DST;
+          d->ip_addr = bptr->ar_tip;
+          memcpy(d->hw_addr, bptr->ar_tha, ETH_ALEN);
+          d->ts = pkthdr->ts;
+          *(d->dhcp_name) = '\0';
+          d->vlan = ether_get_vlan(packet);
+          buffer_advance_head(data, 1);
+        }
+      } else {
+        DEBUG_COMMENT("Skipping packet ... MAC matches host\n");
       }
-    } else {
-      DEBUG_COMMENT("Skipping packet ... MAC matches host\n");
     }
   }
 
@@ -176,7 +220,7 @@ int capture_dhcp_packet(arpwatch_params *params,
 
 #ifdef DEBUG
   struct dhcpbdy *dptr = (struct dhcpbdy *)(packet
-                          + sizeof(struct ether_header)
+                          + ether_header_size(packet)
                           + sizeof(struct ipbdy)
                           + sizeof(struct udphdr));
   DEBUG_PRINT("DHCP OP = %d Transaction ID = 0x%0X Cookie 0x%0X\n",
@@ -194,12 +238,12 @@ int capture_dhcp_packet(arpwatch_params *params,
   // Ok now we can process options.
 
   u_char *optr = (u_char *)(packet
-                  + sizeof(struct ether_header)
+                  + ether_header_size(packet)
                   + sizeof(struct ipbdy)
                   + sizeof(struct udphdr)
                   + sizeof(struct dhcpbdy));
 
-  int pos = sizeof(struct ether_header)
+  int pos = ether_header_size(packet)
             + sizeof(struct ipbdy)
             + sizeof(struct udphdr)
             + sizeof(struct dhcpbdy);
@@ -237,7 +281,8 @@ int capture_ip_packet(arpwatch_params *params,
                        const struct pcap_pkthdr* pkthdr,
                        const u_char* packet) {
   struct ether_header *eptr = (struct ether_header *) packet;
-  struct ipbdy *iptr = (struct ipbdy *) (packet + sizeof(struct ether_header));
+  struct ipbdy *iptr = (struct ipbdy *) (packet +
+                                         ether_header_size(packet));
 
   // Process any IP Packets that are broadcast
 
@@ -255,6 +300,9 @@ int capture_ip_packet(arpwatch_params *params,
 
   // Process IP Address
   d->ip_addr = iptr->ip_sip;
+
+  // Set VLAN Tag
+  d->vlan = ether_get_vlan(packet);
 
   // Process MAC Address
   memcpy(d->hw_addr, eptr->ether_shost, ETH_ALEN);
@@ -292,8 +340,17 @@ void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr,
                      const u_char* packet) {
   arpwatch_params *params = (arpwatch_params*)args;
 
-  struct ether_header *eptr = (struct ether_header *) packet;
+  struct ethernet_header *eptr = (struct ethernet_header *) packet;
+
   uint16_t type = ntohs(eptr->ether_type);
+  if (type == ETHERTYPE_8021Q) {
+    // Tagged interface, get real type
+    struct ethernet_header_8021q *_eptr =
+        (struct ethernet_header_8021q *) packet;
+    type = ntohs(_eptr->ether_type);
+    uint16_t vlan = ether_get_vlan(packet);
+    DEBUG_PRINT("TAGGED Packet type = 0x%0X vlan = %d\n", type, vlan);
+  }
 
   if (type == ETHERTYPE_IP) {
     capture_ip_packet(params, pkthdr, packet);
@@ -301,6 +358,7 @@ void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr,
     capture_arp_packet(params, pkthdr, packet);
   } else {
     // Fallback to just log MAC address
+    DEBUG_PRINT("Unknown packet type 0x%0X\n", type);
     capture_ethernet_packet(params, pkthdr, packet);
   }
 }

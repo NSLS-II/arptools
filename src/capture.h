@@ -40,6 +40,11 @@
 #define SRC_CAPTURE_H_
 
 #include <net/ethernet.h>
+#include <pcap.h>
+
+#ifndef ETHERTYPE_8021Q
+#define ETHERTYPE_8021Q       0x8100
+#endif
 
 #define DHCP_SNLEN            64
 #define DHCP_BFLEN            128
@@ -58,7 +63,7 @@ struct ethernet_header {
   uint16_t ether_type;
 } __attribute__((__packed__));
 
-struct ethernet_header_dot1q {
+struct ethernet_header_8021q {
   uint8_t ether_dhost[ETH_ALEN];
   uint8_t ether_shost[ETH_ALEN];
   uint16_t tpid;
