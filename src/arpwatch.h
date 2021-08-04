@@ -38,7 +38,7 @@
 #ifndef SRC_ARPWATCH_H_
 #define SRC_ARPWATCH_H_
 
-#include "fifo.h"
+#include "buffer.h"
 
 #define ARPWATCH_CONFIG_FILE             "/etc/arpwatch.conf"
 #define ARPWATCH_CONFIG_MAX_STRING       2048
@@ -57,7 +57,7 @@ typedef struct {
   int arp_loop_delay;
   int pcap_timeout;
   int filter_self;
-  fifo data_fifo;
+  buffer_data data_buffer;
   char program[ARPWATCH_CONFIG_MAX_STRING];
   char iface[ARPWATCH_CONFIG_MAX_STRING];
   char hostname[ARPWATCH_CONFIG_MAX_STRING];

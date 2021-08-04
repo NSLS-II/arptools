@@ -36,8 +36,8 @@
 //  THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#ifndef SRC_FIFO_H_
-#define SRC_FIFO_H_
+#ifndef SRC_BUFFER_H_
+#define SRC_BUFFER_H_
 
 #include <time.h>
 #include <pthread.h>
@@ -46,22 +46,22 @@
 
 /* Macro Definitions */
 
-#define FIFO_ERR_MEMORY        1
-#define FIFO_NOERR             0
-#define FIFO_NAME_MAX          256
-#define FIFO_TYPE_ARP_SRC      0x00
-#define FIFO_TYPE_ARP_DST      0x01
-#define FIFO_TYPE_UDP          0x02
-#define FIFO_TYPE_DHCP         0x04
-#define FIFO_TYPE_UNKNOWN      0x08
-#define FIFO_TYPE_IP           0x10
+#define BUFFER_ERR_MEMORY        1
+#define BUFFER_NOERR             0
+#define BUFFER_NAME_MAX          256
+#define BUFFER_TYPE_ARP_SRC      0x00
+#define BUFFER_TYPE_ARP_DST      0x01
+#define BUFFER_TYPE_UDP          0x02
+#define BUFFER_TYPE_DHCP         0x04
+#define BUFFER_TYPE_UNKNOWN      0x08
+#define BUFFER_TYPE_IP           0x10
 
 typedef struct {
   unsigned char hw_addr[ETH_ALEN];
   struct in_addr ip_addr;
   struct timeval ts;
   int type;
-  char dhcp_name[FIFO_NAME_MAX];
+  char dhcp_name[BUFFER_NAME_MAX];
 } arp_data;
 
 typedef struct {
@@ -72,45 +72,46 @@ typedef struct {
   int size;
   int full;
   int overruns;
+  int ring;
   pthread_mutex_t mutex;
   pthread_cond_t signal;
-} fifo;
+} buffer_data;
 
 
-/* FIFO Functions */
+/* BUFFER Functions */
 
-arp_data* fifo_get_head(fifo *buffer);
+arp_data* buffer_get_head(buffer_data *buffer);
 /*
- * Return the head of the FIFO element pointed to by f.
+ * Return the head of the BUFFER element pointed to by f.
  * This routine will signal that new data is avaliable in
- * the fifo using "pthread_cond_signal"
+ * the buffer using "pthread_cond_signal"
  */
-arp_data* fifo_get_tail(fifo *buffer, int wait);
+arp_data* buffer_get_tail(buffer_data *buffer, int wait);
 /*
- * Return the tail of the FIFO element pointed to by f.
+ * Return the tail of the BUFFER element pointed to by f.
  * This routine will block until data is avaliable, waiting
- * on the signal sent by "fifo_get_head". If data is on the
- * fifo then it will immediately return
+ * on the signal sent by "buffer_get_head". If data is on the
+ * buffer then it will immediately return
  */
-void fifo_advance_head(fifo *buffer, int unique);
+void buffer_advance_head(buffer_data *buffer, int unique);
 /*
  * Advance the head pointer, signalling we are done filling
- * the fifo with an element.
+ * the buffer with an element.
  */
-void fifo_advance_tail(fifo *buffer);
+void buffer_advance_tail(buffer_data *buffer);
 /*
- * Advance the tail pointer, signalling we have processed a fifo
+ * Advance the tail pointer, signalling we have processed a buffer
  * element and this can be returned
  */
-int fifo_init(fifo *buffer, int size);
+int buffer_init(buffer_data *buffer, int size, int ring);
 /*
- * Initialize the fifo. The FIFO is of length size with a data
+ * Initialize the buffer. The BUFFER is of length size with a data
  * structure of length elem_size.
  */
-int fifo_used_bytes(fifo *buffer);
-double fifo_percent_full(fifo *buffer);
-int fifo_used_elements(fifo *buffer);
-void fifo_flush(fifo *buffer);
-int fifo_overruns(fifo *buffer);
+int buffer_used_bytes(buffer_data *buffer);
+double buffer_percent_full(buffer_data *buffer);
+int buffer_used_elements(buffer_data *buffer);
+void buffer_flush(buffer_data *buffer);
+int buffer_overruns(buffer_data *buffer);
 
-#endif  // SRC_FIFO_H_
+#endif  // SRC_BUFFER_H_

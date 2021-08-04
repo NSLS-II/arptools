@@ -103,7 +103,7 @@ add_custom_command(
 
 # add the executable
 add_executable(arpwatch src/arpwatch.c
-                        src/fifo.c
+                        src/buffer.c
                         src/mysql.c
                         src/arp.c
                         src/utils.c
@@ -112,7 +112,7 @@ add_executable(arpwatch src/arpwatch.c
                         src/arpwatch.h
                         src/capture.h
                         src/debug.h
-                        src/fifo.h
+                        src/buffer.h
                         src/mysql.h
                         src/utils.h
                         version.c)

@@ -43,13 +43,13 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#include "fifo.h"
+#include "buffer.h"
 #include "debug.h"
 
-int fifo_init(fifo *buffer, int size) {
+int buffer_init(buffer_data *buffer, int size, int ring) {
   buffer->data = malloc(size * sizeof(arp_data));
   if (buffer->data == NULL) {
-    return FIFO_ERR_MEMORY;
+    return BUFFER_ERR_MEMORY;
   }
 
   /* set the initial parameters */
@@ -57,6 +57,7 @@ int fifo_init(fifo *buffer, int size) {
   buffer->tail = buffer->data;
   buffer->end  = buffer->data + (size - 1);
   buffer->size = size;
+  buffer->ring = ring;
 
   buffer->full = 0;
   buffer->overruns = 0;
@@ -66,10 +67,10 @@ int fifo_init(fifo *buffer, int size) {
   pthread_mutex_init(&buffer->mutex, NULL);
   pthread_cond_init(&buffer->signal, NULL);
 
-  return FIFO_NOERR;
+  return BUFFER_NOERR;
 }
 
-void fifo_flush(fifo *buffer) {
+void buffer_flush(buffer_data *buffer) {
   pthread_mutex_lock(&buffer->mutex);
   buffer->tail = buffer->head;
   buffer->full = 0;
@@ -77,7 +78,7 @@ void fifo_flush(fifo *buffer) {
   pthread_mutex_unlock(&buffer->mutex);
 }
 
-int fifo_overruns(fifo *buffer) {
+int buffer_overruns(buffer_data *buffer) {
   int _overruns;
   pthread_mutex_lock(&buffer->mutex);
   _overruns = buffer->overruns;
@@ -86,7 +87,7 @@ int fifo_overruns(fifo *buffer) {
   return _overruns;
 }
 
-int fifo_used_bytes(fifo *buffer) {
+int buffer_used_bytes(buffer_data *buffer) {
   int bytes = 0;
   int used;
 
@@ -106,21 +107,21 @@ int fifo_used_bytes(fifo *buffer) {
   return bytes;
 }
 
-int fifo_used_elements(fifo *buffer) {
-  return fifo_used_bytes(buffer) / sizeof(arp_data);
+int buffer_used_elements(buffer_data *buffer) {
+  return buffer_used_bytes(buffer) / sizeof(arp_data);
 }
 
-double fifo_percent_full(fifo *buffer) {
+double buffer_percent_full(buffer_data *buffer) {
   int bytes;
   double percent;
 
-  bytes = fifo_used_bytes(buffer);
+  bytes = buffer_used_bytes(buffer);
   percent = (double)bytes / (double)(sizeof(arp_data) * buffer->size);
 
   return (percent * 100.0);
 }
 
-arp_data *fifo_get_head(fifo *buffer) {
+arp_data *buffer_get_head(buffer_data *buffer) {
   void *head;
 
   pthread_mutex_lock(&buffer->mutex);
@@ -130,20 +131,38 @@ arp_data *fifo_get_head(fifo *buffer) {
   return head;
 }
 
-void fifo_advance_head(fifo *buffer, int unique) {
+int buffer_compare_data(arp_data *d1, arp_data *d2) {
+  if ((d1->ip_addr.s_addr == d2->ip_addr.s_addr) &&
+      (d1->type == d2->type) &&
+      (!memcmp(d1->hw_addr, d2->hw_addr, ETH_ALEN))) {
+    return 0;
+  } else {
+    return -1;
+  }
+}
+
+void buffer_advance_head(buffer_data *buffer, int unique) {
   /* Increment the head pointet */
   pthread_mutex_lock(&buffer->mutex);
 
-  /* Check all the tail pointers */
-
+  buffer->full = 0;
   if ((buffer->head == buffer->end) && (buffer->tail == buffer->data)) {
+    // We have the head at the end of the array
+    // and the tail at the beginning
     buffer->full = 1;
     buffer->overruns++;
-    goto cleanup;
-  } else if ((buffer->head + 1) == buffer->tail) {
+    if (!buffer->ring) {
+      goto cleanup;
+    }
+  }
+
+  if ((buffer->head + 1) == buffer->tail) {
+    // Here the head is one ahead of the tail
     buffer->full = 1;
     buffer->overruns++;
-    goto cleanup;
+    if (!buffer->ring) {
+      goto cleanup;
+    }
   }
 
   // We can now do verification in a loop to
@@ -154,9 +173,7 @@ void fifo_advance_head(fifo *buffer, int unique) {
   if ((buffer->head != buffer->tail) && unique) {
     arp_data *tmp = buffer->tail;
     do {
-      if ((tmp->ip_addr.s_addr == buffer->head->ip_addr.s_addr) &&
-          (tmp->type == buffer->head->type) &&
-          (!memcmp(tmp->hw_addr, buffer->head->hw_addr, ETH_ALEN))) {
+      if (!buffer_compare_data(tmp, buffer->head)) {
           // Data matches
           DEBUG_PRINT("Skipping, data exists %p\n", tmp);
           match = -1;
@@ -173,12 +190,19 @@ void fifo_advance_head(fifo *buffer, int unique) {
   }
 
   if (!match) {
+    // Advance both pointers
     if (buffer->head == buffer->end) {
       buffer->head = buffer->data;
-      buffer->full = 0;
     } else {
       buffer->head++;
-      buffer->full = 0;
+    }
+
+    if (buffer->ring && buffer->full) {
+      if (buffer->tail == buffer->end) {
+        buffer->tail = buffer->tail;
+      } else {
+        buffer->tail++;
+      }
     }
   }
 
@@ -187,7 +211,7 @@ cleanup:
   pthread_mutex_unlock(&buffer->mutex);
 }
 
-arp_data* fifo_get_tail(fifo *buffer, int wait) {
+arp_data* buffer_get_tail(buffer_data *buffer, int wait) {
   void* tail;
 
   pthread_mutex_lock(&buffer->mutex);
@@ -211,12 +235,12 @@ arp_data* fifo_get_tail(fifo *buffer, int wait) {
   return tail;
 }
 
-void fifo_advance_tail(fifo *buffer) {
-  /* Return the tail pointer and advance the FIFO */
+void buffer_advance_tail(buffer_data *buffer) {
+  /* Return the tail pointer and advance the BUFFER */
 
   pthread_mutex_lock(&buffer->mutex);
 
-  /* If the head and tail are the same, FIFO is empty */
+  /* If the head and tail are the same, BUFFER is empty */
   if (buffer->tail == buffer->head) {
     return;
   }

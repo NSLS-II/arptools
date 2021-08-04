@@ -50,7 +50,7 @@
 #include <netinet/ether.h>
 #include <netinet/if_ether.h>
 
-#include "fifo.h"
+#include "buffer.h"
 #include "debug.h"
 #include "arpwatch.h"
 #include "capture.h"
@@ -68,10 +68,10 @@ int capture_ethernet_packet(arpwatch_params *params,
               type, type,
               ether_ntoa((const struct ether_addr *)&eptr->ether_shost));
 
-  fifo *data = &params->data_fifo;
-  arp_data *d = fifo_get_head(data);
+  buffer_data *data = &params->data_buffer;
+  arp_data *d = buffer_get_head(data);
 
-  d->type = FIFO_TYPE_UNKNOWN;
+  d->type = BUFFER_TYPE_UNKNOWN;
   memcpy(d->hw_addr, eptr->ether_shost, ETH_ALEN);
   d->ts = pkthdr->ts;
 
@@ -85,7 +85,7 @@ int capture_ethernet_packet(arpwatch_params *params,
   zero.s_addr = 0;
   d->ip_addr = zero;
 
-  fifo_advance_head(data, 1);
+  buffer_advance_head(data, 1);
 
   return 0;
 }
@@ -119,7 +119,7 @@ int capture_arp_packet(arpwatch_params *params,
     return -1;
   }
 
-  fifo *data = &params->data_fifo;
+  buffer_data *data = &params->data_buffer;
 
   if ((htons(aptr->ar_op) == ARPOP_REPLY) ||
       (htons(aptr->ar_op) == ARPOP_REQUEST)) {
@@ -134,13 +134,13 @@ int capture_arp_packet(arpwatch_params *params,
                   ether_ntoa((const struct ether_addr *)&bptr->ar_sha),
                   inet_ntoa(bptr->ar_sip));
 
-      arp_data *d = fifo_get_head(data);
-      d->type = FIFO_TYPE_ARP_SRC;
+      arp_data *d = buffer_get_head(data);
+      d->type = BUFFER_TYPE_ARP_SRC;
       d->ip_addr = bptr->ar_sip;
       memcpy(d->hw_addr, bptr->ar_sha, ETH_ALEN);
       d->ts = pkthdr->ts;
       *(d->dhcp_name) = '\0';
-      fifo_advance_head(data, 1);
+      buffer_advance_head(data, 1);
 
       if (htons(aptr->ar_op) == ARPOP_REPLY) {
         DEBUG_PRINT("Iface : %s Packet time : %ld ARP Dest  :  %-20s %-16s\n",
@@ -149,13 +149,13 @@ int capture_arp_packet(arpwatch_params *params,
                     ether_ntoa((const struct ether_addr *)&bptr->ar_tha),
                     inet_ntoa(bptr->ar_tip));
 
-        arp_data *d = fifo_get_head(data);
-        d->type = FIFO_TYPE_ARP_DST;
+        arp_data *d = buffer_get_head(data);
+        d->type = BUFFER_TYPE_ARP_DST;
         d->ip_addr = bptr->ar_tip;
         memcpy(d->hw_addr, bptr->ar_tha, ETH_ALEN);
         d->ts = pkthdr->ts;
         *(d->dhcp_name) = '\0';
-        fifo_advance_head(data, 1);
+        buffer_advance_head(data, 1);
       }
     } else {
       DEBUG_COMMENT("Skipping packet ... MAC matches host\n");
@@ -168,8 +168,8 @@ int capture_arp_packet(arpwatch_params *params,
 int capture_dhcp_packet(arpwatch_params *params,
                         const struct pcap_pkthdr* pkthdr,
                         const u_char* packet) {
-  fifo *data = &params->data_fifo;
-  arp_data *d = fifo_get_head(data);
+  buffer_data *data = &params->data_buffer;
+  arp_data *d = buffer_get_head(data);
 
 #ifdef DEBUG
   struct dhcpbdy *dptr = (struct dhcpbdy *)(packet
@@ -183,10 +183,10 @@ int capture_dhcp_packet(arpwatch_params *params,
 #endif
 
   // Set to DHCP type
-  d->type = FIFO_TYPE_DHCP;
+  d->type = BUFFER_TYPE_DHCP;
 
   // Set default hostname
-  strncpy(d->dhcp_name, "(none)", FIFO_NAME_MAX);
+  strncpy(d->dhcp_name, "(none)", BUFFER_NAME_MAX);
 
   // Ok now we can process options.
 
@@ -212,11 +212,11 @@ int capture_dhcp_packet(arpwatch_params *params,
     if (code == DHCP_OPCODE_END) {
       break;
     } else if (code == DHCP_OPCODE_HOSTNAME) {
-      char _name[FIFO_NAME_MAX];
+      char _name[BUFFER_NAME_MAX];
       if (len < (sizeof(_name)- 1)) {
         memcpy(_name, optr, len);
         _name[len] = '\0';  // Null terminate
-        strncpy(d->dhcp_name, _name, FIFO_NAME_MAX);
+        strncpy(d->dhcp_name, _name, BUFFER_NAME_MAX);
         DEBUG_PRINT("DHCP Hostname : %s\n", _name);
       } else {
         ERROR_COMMENT("DHCP Name too long\n");
@@ -244,11 +244,11 @@ int capture_ip_packet(arpwatch_params *params,
               ether_ntoa((const struct ether_addr *)&eptr->ether_shost),
               inet_ntoa(iptr->ip_sip));
 
-  fifo *data = &params->data_fifo;
-  arp_data *d = fifo_get_head(data);
+  buffer_data *data = &params->data_buffer;
+  arp_data *d = buffer_get_head(data);
 
   // Set type to UDP, we will overwrite later
-  d->type = FIFO_TYPE_IP;
+  d->type = BUFFER_TYPE_IP;
 
   // Process IP Address
   d->ip_addr = iptr->ip_sip;
@@ -268,7 +268,7 @@ int capture_ip_packet(arpwatch_params *params,
                           + sizeof(struct ether_header)
                           + sizeof(struct ipbdy));
 
-    d->type = FIFO_TYPE_UDP;
+    d->type = BUFFER_TYPE_UDP;
 
     DEBUG_PRINT("Iface : %s %d UDP %d -> %d\n", params->iface,
                 sizeof(struct ipbdy),
@@ -280,7 +280,7 @@ int capture_ip_packet(arpwatch_params *params,
     }
   }
 
-  fifo_advance_head(data, 1);
+  buffer_advance_head(data, 1);
 
   return 0;
 }

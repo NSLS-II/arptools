@@ -45,7 +45,7 @@
 #include <libconfig.h>
 #include <sys/wait.h>
 
-#include "fifo.h"
+#include "buffer.h"
 #include "mysql.h"
 #include "debug.h"
 #include "arp.h"
@@ -240,6 +240,13 @@ int main(int argc, char *argv[]) {
 
       if (read_instance_config(&params, i)) {
         ERROR_COMMENT("Error reading config file\n");
+        exit(EXIT_FAILURE);
+      }
+
+      // Setup Buffer
+
+      if (buffer_init(&(params.data_buffer), 1000000, 1) != BUFFER_NOERR) {
+        ERROR_COMMENT("buffer_init(): ERROR");
         exit(EXIT_FAILURE);
       }
 

@@ -45,7 +45,7 @@
 #include <mysql/mysql.h>
 
 #include "debug.h"
-#include "fifo.h"
+#include "buffer.h"
 #include "mysql.h"
 #include "utils.h"
 #include "arpwatch.h"
@@ -75,7 +75,7 @@ void * mysql_thread(void * arg) {
       goto _error;
     }
 
-    arp_data *arp = fifo_get_tail(&(params->data_fifo), 0);
+    arp_data *arp = buffer_get_tail(&(params->data_buffer), 0);
 
     while (arp) {
       char sql_buffer[100000];
@@ -110,18 +110,18 @@ void * mysql_thread(void * arg) {
       const char *hw_addr = int_to_mac(arp->hw_addr);
       const char *ip_addr = inet_ntoa(arp->ip_addr);
 
-      if ((arp->type == FIFO_TYPE_ARP_SRC) ||
-          (arp->type == FIFO_TYPE_ARP_DST) ||
-          (arp->type == FIFO_TYPE_UDP) ||
-          (arp->type == FIFO_TYPE_IP)) {
+      if ((arp->type == BUFFER_TYPE_ARP_SRC) ||
+          (arp->type == BUFFER_TYPE_ARP_DST) ||
+          (arp->type == BUFFER_TYPE_UDP) ||
+          (arp->type == BUFFER_TYPE_IP)) {
         int type_arp = 0;
         int type_udp = 0;
 
-        if ((arp->type == FIFO_TYPE_ARP_SRC) ||
-            (arp->type == FIFO_TYPE_ARP_DST)) {
+        if ((arp->type == BUFFER_TYPE_ARP_SRC) ||
+            (arp->type == BUFFER_TYPE_ARP_DST)) {
           type_arp = 1;
         }
-        if (arp->type == FIFO_TYPE_UDP) {
+        if (arp->type == BUFFER_TYPE_UDP) {
           type_udp = 1;
         }
 
@@ -153,7 +153,7 @@ void * mysql_thread(void * arg) {
         if (mysql_real_query(con, sql_buffer, strlen(sql_buffer))) {
           mysql_print_error(con);
         }
-      } else if (arp->type == FIFO_TYPE_DHCP) {
+      } else if (arp->type == BUFFER_TYPE_DHCP) {
         snprintf(sql_buffer, sizeof(sql_buffer),
                 "INSERT INTO arpdata "
                 "(hw_address, location, label, "
@@ -174,7 +174,7 @@ void * mysql_thread(void * arg) {
         if (mysql_real_query(con, sql_buffer, strlen(sql_buffer))) {
           mysql_print_error(con);
         }
-      } else if (arp->type == FIFO_TYPE_UNKNOWN) {
+      } else if (arp->type == BUFFER_TYPE_UNKNOWN) {
         snprintf(sql_buffer, sizeof(sql_buffer),
                 "INSERT INTO arpdata "
                 "(hw_address, location, label, "
@@ -195,8 +195,8 @@ void * mysql_thread(void * arg) {
         }
       }
 
-      fifo_advance_tail(&(params->data_fifo));
-      arp = fifo_get_tail(&(params->data_fifo), 0);
+      buffer_advance_tail(&(params->data_buffer));
+      arp = buffer_get_tail(&(params->data_buffer), 0);
     }
 
 _error:
@@ -210,13 +210,6 @@ _error:
 
 int mysql_setup(arpwatch_params *params) {
   DEBUG_PRINT("MySQL client version: %s\n", mysql_get_client_info());
-
-  // Setup FIFO
-
-  if (fifo_init(&(params->data_fifo), 1000000) != FIFO_NOERR) {
-    ERROR_COMMENT("fifo_init(): ERROR");
-    return -1;
-  }
 
   // Setup thread data
 
