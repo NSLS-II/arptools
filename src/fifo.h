@@ -77,47 +77,40 @@ typedef struct {
 } fifo;
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* FIFO Functions */
 
-arp_data* fifo_get_head(fifo *f);
+arp_data* fifo_get_head(fifo *buffer);
 /*
  * Return the head of the FIFO element pointed to by f.
  * This routine will signal that new data is avaliable in
  * the fifo using "pthread_cond_signal"
  */
-arp_data* fifo_get_tail(fifo *f, int wait);
+arp_data* fifo_get_tail(fifo *buffer, int wait);
 /*
  * Return the tail of the FIFO element pointed to by f.
  * This routine will block until data is avaliable, waiting
  * on the signal sent by "fifo_get_head". If data is on the
  * fifo then it will immediately return
  */
-void fifo_advance_head(fifo *f);
+void fifo_advance_head(fifo *buffer, int unique);
 /*
  * Advance the head pointer, signalling we are done filling
  * the fifo with an element.
  */
-void fifo_advance_tail(fifo *f);
+void fifo_advance_tail(fifo *buffer);
 /*
  * Advance the tail pointer, signalling we have processed a fifo
  * element and this can be returned
  */
-int fifo_init(fifo *f, int size);
+int fifo_init(fifo *buffer, int size);
 /*
  * Initialize the fifo. The FIFO is of length size with a data
  * structure of length elem_size.
  */
-int fifo_used_bytes(fifo *f);
-double fifo_percent_full(fifo *f);
-int fifo_used_elements(fifo *f);
-void fifo_flush(fifo *f);
-int fifo_overruns(fifo *f);
-#ifdef __cplusplus
-}
-#endif
+int fifo_used_bytes(fifo *buffer);
+double fifo_percent_full(fifo *buffer);
+int fifo_used_elements(fifo *buffer);
+void fifo_flush(fifo *buffer);
+int fifo_overruns(fifo *buffer);
 
 #endif  // SRC_FIFO_H_

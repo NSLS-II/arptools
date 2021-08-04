@@ -85,7 +85,7 @@ int capture_ethernet_packet(arpwatch_params *params,
   zero.s_addr = 0;
   d->ip_addr = zero;
 
-  fifo_advance_head(data);
+  fifo_advance_head(data, 1);
 
   return 0;
 }
@@ -140,7 +140,7 @@ int capture_arp_packet(arpwatch_params *params,
       memcpy(d->hw_addr, bptr->ar_sha, ETH_ALEN);
       d->ts = pkthdr->ts;
       *(d->dhcp_name) = '\0';
-      fifo_advance_head(data);
+      fifo_advance_head(data, 1);
 
       if (htons(aptr->ar_op) == ARPOP_REPLY) {
         DEBUG_PRINT("Iface : %s Packet time : %ld ARP Dest  :  %-20s %-16s\n",
@@ -155,7 +155,7 @@ int capture_arp_packet(arpwatch_params *params,
         memcpy(d->hw_addr, bptr->ar_tha, ETH_ALEN);
         d->ts = pkthdr->ts;
         *(d->dhcp_name) = '\0';
-        fifo_advance_head(data);
+        fifo_advance_head(data, 1);
       }
     } else {
       DEBUG_COMMENT("Skipping packet ... MAC matches host\n");
@@ -280,7 +280,7 @@ int capture_ip_packet(arpwatch_params *params,
     }
   }
 
-  fifo_advance_head(data);
+  fifo_advance_head(data, 1);
 
   return 0;
 }
