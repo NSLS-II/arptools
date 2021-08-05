@@ -344,6 +344,11 @@ void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr,
 
   uint16_t type = ntohs(eptr->ether_type);
   if (type == ETHERTYPE_8021Q) {
+    // If we ignore tagged packets, just return
+    if (params->ignore_tagged) {
+      return;
+    }
+
     // Tagged interface, get real type
     struct ethernet_header_8021q *_eptr =
         (struct ethernet_header_8021q *) packet;

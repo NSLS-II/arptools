@@ -6,6 +6,7 @@ CREATE TABLE arpdata(
   hw_address        CHAR(17) NOT NULL,
   ip_address        CHAR(15),
   hostname          VARCHAR(256),
+  vlan              SMALLINT,
   location          VARCHAR(256) NOT NULL,
   label             VARCHAR(256) NOT NULL,
   last_seen         DATETIME,

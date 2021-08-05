@@ -204,6 +204,11 @@ int read_instance_config(arpwatch_params *params, int instance_num) {
     goto _error;
   }
 
+  if (!config_setting_lookup_bool(instance, "ignore_tagged",
+                                  &params->ignore_tagged)) {
+    params->ignore_tagged = 0;
+  }
+
   rtn = 0;
 
 _error:

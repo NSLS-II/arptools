@@ -60,6 +60,7 @@ typedef struct {
   int filter_self;
   int buffer_size;
   buffer_data data_buffer;
+  int ignore_tagged;
   char program[ARPWATCH_CONFIG_MAX_STRING];
   char iface[ARPWATCH_CONFIG_MAX_STRING];
   char hostname[ARPWATCH_CONFIG_MAX_STRING];
