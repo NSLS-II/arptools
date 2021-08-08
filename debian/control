@@ -3,10 +3,20 @@ Maintainer: Stuart B. Wilkins <swilkins@bnl.gov>
 Section: misc
 Priority: optional
 Standards-Version: 3.9.2
-Build-Depends: debhelper (>= 11)
+Build-Depends: debhelper (>= 11),
+  libmariadb-dev-compat,
+  libpcap-dev,
+  libnet-nev,
+  libconfig-dev
+  libsystemd-dev
+  cmake (>= 3.13),
 
 Package: arptools
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: libpcap,
+  libnet,
+  libconfig,
+  libsystemd,
+  ${shlibs:Depends}, ${misc:Depends}
 Description: arptools
  Library to perform monitoring of IPV4 networks
