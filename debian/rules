@@ -5,8 +5,11 @@
 export DH_VERBOSE=1
 
 %:
-	dh $@ --buildsystem=cmake
+	dh $@ --buildsystem=cmake --with=systemd
 
 override_dh_auto_configure:
 	dh_auto_configure -- \
 		-DCPPLINT_CHECK=NO -DNO_IN_SOURCE_BUILDS=NO
+
+override_dh_installsystemd:
+	dh_installsystemd --name=arpwatch
