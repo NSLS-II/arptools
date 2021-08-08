@@ -66,8 +66,8 @@ stages:
         set -e
         mkdir -p build
         gbp buildpackage \
-          --git-export=main \
-          --git-debian-branch=main \
+          --git-ignore-new \
+          --git-ignore-branch \
           --git-upstream-tree=main \
           -uc -us \
           --git-export-dir=build \
