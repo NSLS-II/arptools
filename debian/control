@@ -7,14 +7,15 @@ Build-Depends: debhelper (>= 11),
   libmariadb-dev-compat,
   libpcap-dev,
   libnet-nev,
-  libconfig-dev
-  libsystemd-dev
+  libconfig-dev,
+  libsystemd-dev,
   cmake (>= 3.13),
 
 Package: arptools
 Architecture: any
 Depends: libpcap,
   libnet,
+  libmariadb,
   libconfig,
   libsystemd,
   ${shlibs:Depends}, ${misc:Depends}
