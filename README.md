@@ -5,6 +5,7 @@
 | Overall Build          | [![Build Status](https://dev.azure.com/nsls-ii/arptools/_apis/build/status/NSLS-II.arptools?branchName=main)](https://dev.azure.com/nsls-ii/arptools/_build/latest?definitionId=5&branchName=master)|
 | Centos 7               | [![Build Status](https://dev.azure.com/nsls-ii/arptools/_apis/build/status/NSLS-II.arptools?branchName=main&jobName=Build&configuration=Build%20centos7)](https://dev.azure.com/nsls-ii/arptools/_build/latest?definitionId=5&branchName=master) |
 | Centos 8               | [![Build Status](https://dev.azure.com/nsls-ii/arptools/_apis/build/status/NSLS-II.arptools?branchName=main&jobName=Build&configuration=Build%20centos8)](https://dev.azure.com/nsls-ii/arptools/_build/latest?definitionId=5&branchName=master) |
+| Debian 10              | [![Build Status](https://dev.azure.com/nsls-ii/arptools/_apis/build/status/NSLS-II.arptools?branchName=main&jobName=Build&configuration=Build%20debian10)](https://dev.azure.com/nsls-ii/arptools/_build/latest?definitionId=5&branchName=master) |
 
 ## Installation
 

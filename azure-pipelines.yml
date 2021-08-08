@@ -30,7 +30,7 @@ stages:
           pkg_type: redhat
           rpmrelease: centos7
           cmake: cmake3
-        deb10:
+        debian10:
           containerImage: stuwilkins/arptools-build-deb10:latest
           debrelease: debian10
           pkg_type: debian

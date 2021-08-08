@@ -15,7 +15,7 @@ Package: arptools
 Architecture: any
 Depends: libpcap0.8,
   libnet1,
-  libmariadb,
+  libmariadb3,
   libconfig9,
   libsystemd0,
   ${shlibs:Depends}, ${misc:Depends}
