@@ -98,7 +98,7 @@ add_custom_command(
   OUTPUT ${CMAKE_BINARY_DIR}/version.c
   ${CMAKE_BINARY_DIR}/_version.c
   COMMAND ${CMAKE_COMMAND} -P
-  ${CMAKE_SOURCE_DIR}/cmake/version.cmake
+    ${CMAKE_SOURCE_DIR}/cmake/version.cmake
 )
 
 # add the executable
