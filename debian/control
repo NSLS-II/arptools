@@ -6,7 +6,7 @@ Standards-Version: 3.9.2
 Build-Depends: debhelper (>= 11),
   libmariadb-dev-compat,
   libpcap-dev,
-  libnet-nev,
+  libnet-dev,
   libconfig-dev,
   libsystemd-dev,
   cmake (>= 3.13),
