@@ -28,6 +28,10 @@ stages:
           containerImage: stuwilkins/arptools-build-centos7:latest
           pkg_type: redhat
           rpmrelease: centos7
+        deb10:
+          containerImage: stuwilkins/arptools-build-deb10:latest
+          debrelease: debian10
+          pkg_type: debian
 
     container:
       image: $[ variables['containerImage'] ]
@@ -55,39 +59,40 @@ stages:
         echo "##[debug] VERSION = $VERSION"
       displayName: Set Git Describe to Variable
 
-#    - script: |
-#        set -e
-#        mkdir -p build
-#        gbp buildpackage \
-#          --git-ignore-new \
-#          --git-ignore-branch \
-#          -uc -us \
-#          --git-export-dir=build \
-#          --git-tarball-dir=build
-#        old_debfile=$(ls -1 build/arptools_*.deb | head -1)
-#        new_debfile=$(echo ${old_debfile} | sed "s/\.deb/-$(debrelease).deb/")
-#        mv "${old_debfile}" "${new_debfile}"
-#        echo "##vso[task.setvariable variable=releasefile]${new_debfile}"
-#        echo "##[debug] old_debfile = ${old_debfile}"
-#        echo "##[debug] new_debfile = ${new_debfile}"
-#        echo "##[debug] gitdesc = $(gitdesc)"
-#      displayName: 'Build Debian Package'
-#      condition: and(succeeded(), eq(variables.pkg_type, 'debian'))
-#
-#    - task: CopyFiles@2
-#      inputs:
-#        targetFolder: '$(Build.ArtifactStagingDirectory)'
-#        contents: 'build/arptools_*.deb'
-#        flattenFolders: true
-#      condition: and(succeeded(), eq(variables.pkg_type, 'debian'))
-#
-#    - task: PublishBuildArtifacts@1
-#      inputs:
-#        pathToPublish: '$(Build.ArtifactStagingDirectory)'
-#        artifactName: packages
-#      displayName: Publish Debian Packages
-#      condition: and(succeeded(), eq(variables.pkg_type, 'debian'))
-#
+    - script: |
+        set -e
+        mkdir -p build
+        gbp buildpackage \
+          --git-ignore-new \
+          --git-ignore-branch \
+          -uc -us \
+          --git-export-dir=build \
+          --git-tarball-dir=build \
+          --git-upstream-tree=main
+        old_debfile=$(ls -1 build/arptools_*.deb | head -1)
+        new_debfile=$(echo ${old_debfile} | sed "s/\.deb/-$(debrelease).deb/")
+        mv "${old_debfile}" "${new_debfile}"
+        echo "##vso[task.setvariable variable=releasefile]${new_debfile}"
+        echo "##[debug] old_debfile = ${old_debfile}"
+        echo "##[debug] new_debfile = ${new_debfile}"
+        echo "##[debug] gitdesc = $(gitdesc)"
+      displayName: 'Build Debian Package'
+      condition: and(succeeded(), eq(variables.pkg_type, 'debian'))
+
+    - task: CopyFiles@2
+      inputs:
+        targetFolder: '$(Build.ArtifactStagingDirectory)'
+        contents: 'build/arptools_*.deb'
+        flattenFolders: true
+      condition: and(succeeded(), eq(variables.pkg_type, 'debian'))
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)'
+        artifactName: packages
+      displayName: Publish Debian Packages
+      condition: and(succeeded(), eq(variables.pkg_type, 'debian'))
+
     - script: |
         set -e
         RPMDIR="`pwd`/rpmbuild"
