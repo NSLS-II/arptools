@@ -51,6 +51,8 @@
 #define ARPWATCH_MYSQL_LOOP_DELAY        120
 #define ARPWATCH_BUFFER_SIZE             1000000
 
+#define NO_VLAN_TAG                      0x0000
+
 typedef struct {
   int num_instance;
   int mysql_loop_delay;
