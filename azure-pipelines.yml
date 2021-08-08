@@ -24,14 +24,17 @@ stages:
           containerImage: stuwilkins/arptools-build-centos8:latest
           pkg_type: redhat
           rpmrelease: centos8
+          cmake: cmake
         centos7:
           containerImage: stuwilkins/arptools-build-centos7:latest
           pkg_type: redhat
           rpmrelease: centos7
+          cmake: cmake3
         deb10:
           containerImage: stuwilkins/arptools-build-deb10:latest
           debrelease: debian10
           pkg_type: debian
+          cmake: cmake
 
     container:
       image: $[ variables['containerImage'] ]
@@ -41,7 +44,7 @@ stages:
         set -e
         mkdir build
         cd build
-        cmake3 ..
+        $(cmake) ..
       displayName: Run CMAKE
 
     - script: |
