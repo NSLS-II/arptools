@@ -3,12 +3,4 @@ FROM debian:10
 RUN apt-get update && apt-get -y upgrade
 RUN apt-get -y install libmariadb-dev-compat libpcap-dev libnet-dev libconfig-dev libsystemd-dev cmake
 RUN apt-get -y install git-buildpackage python3-pip
-#RUN yum install -y 'yum-command(config-manager)'
-#RUN yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-#RUN yum -y update
-#RUN yum -y group install "Development Tools"
-#RUN yum -y install cmake3 \
-#                   libpcap-devel libnet-devel libconfig-devel \
-#                   mariadb-devel systemd-devel pkg-config
-#RUN yum -y install python3-pip
 RUN pip3 install cpplint
