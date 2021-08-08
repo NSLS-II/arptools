@@ -5,19 +5,19 @@ Priority: optional
 Standards-Version: 3.9.2
 Build-Depends: debhelper (>= 11),
   libmariadb-dev-compat,
-  libpcap-dev,
-  libnet-dev,
+  libpcap0.8-dev,
+  libnet1-dev,
   libconfig-dev,
   libsystemd-dev,
   cmake (>= 3.13),
 
 Package: arptools
 Architecture: any
-Depends: libpcap,
-  libnet,
+Depends: libpcap0.8,
+  libnet1,
   libmariadb,
-  libconfig,
-  libsystemd,
+  libconfig9,
+  libsystemd0,
   ${shlibs:Depends}, ${misc:Depends}
 Description: arptools
  Library to perform monitoring of IPV4 networks
