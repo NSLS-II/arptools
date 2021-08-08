@@ -11,7 +11,7 @@
 ### RedHat
 
 ```bash
-yum install libpcap-devel libnet-devel libconfig-devel mariadb-connector-c-devel
+yum install libpcap-devel libnet-devel libconfig-devel mariadb-connector-c-devel libsystemd-devel cmake
 mkdir build && cd build
 cmake ..
 make
@@ -21,7 +21,7 @@ make install
 ### Debian
 
 ```bash
-apt install libmariadb-dev-compat libpcap-dev libnet-dev libconfig-dev cmake
+apt install libmariadb-dev-compat libpcap-dev libnet-dev libconfig-dev libsystemd-dev cmake
 mkdir build && cd build
 cmake ..
 make
