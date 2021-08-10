@@ -108,20 +108,8 @@ int read_global_config(arpwatch_params *params) {
     params->mysql_loop_delay = ARPWATCH_MYSQL_LOOP_DELAY;
   }
 
-  if (!config_lookup_int(&cfg, "arp_loop_delay", &params->arp_loop_delay)) {
-    params->arp_loop_delay = ARPWATCH_ARP_LOOP_DELAY;
-  }
-
-  if (!config_lookup_int(&cfg, "arp_delay", &params->arp_delay)) {
-    params->arp_delay = ARPWATCH_ARP_DELAY;
-  }
-
   if (!config_lookup_int(&cfg, "pcap_timeout", &params->pcap_timeout)) {
     params->pcap_timeout = ARPWATCH_PCAP_TIMEOUT;
-  }
-
-  if (!config_lookup_bool(&cfg, "filter_self", &params->filter_self)) {
-    params->filter_self = 0;
   }
 
   if (!config_lookup_int(&cfg, "buffer_size", &params->buffer_size)) {
@@ -209,6 +197,26 @@ int read_instance_config(arpwatch_params *params, int instance_num) {
     params->ignore_tagged = 0;
   }
 
+  if (!config_setting_lookup_bool(instance, "arp_requests",
+                                  &params->arp_requests)) {
+    params->arp_requests = 1;
+  }
+
+  if (!config_setting_lookup_int(instance, "arp_loop_delay",
+                                 &params->arp_loop_delay)) {
+    params->arp_loop_delay = ARPWATCH_ARP_LOOP_DELAY;
+  }
+
+  if (!config_setting_lookup_int(instance, "arp_delay",
+                                 &params->arp_delay)) {
+    params->arp_delay = ARPWATCH_ARP_DELAY;
+  }
+
+  if (!config_setting_lookup_bool(instance, "filter_self",
+                                  &params->filter_self)) {
+    params->filter_self = 0;
+  }
+
   rtn = 0;
 
 _error:
@@ -261,7 +269,9 @@ int main(int argc, char *argv[]) {
       }
 
       mysql_setup(&params);
-      arp_setup(&params);
+      if (params.arp_requests) {
+        arp_setup(&params);
+      }
       capture_start(&params);
 
       exit(EXIT_SUCCESS);
