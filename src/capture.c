@@ -175,7 +175,7 @@ int capture_arp_packet(arpwatch_params *params,
       if (memcmp(params->hwaddress, bptr->ar_sha, ETH_ALEN) ||
           !params->filter_self) {
         // Check for ARP Probes
-        if ((bptr->ar_sip.s_addr = 0) &&
+        if ((bptr->ar_sip.s_addr == 0) &&
             !memcmp(bptr->ar_tha, mac_zeros, ETH_ALEN)) {
           // ARP Probe!
           DEBUG_PRINT("Iface : %s Packet time : %ld ARP PROBE :  %-20s %-16s\n",
