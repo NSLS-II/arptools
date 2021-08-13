@@ -55,6 +55,7 @@
 #define BUFFER_TYPE_DHCP         0x04
 #define BUFFER_TYPE_UNKNOWN      0x08
 #define BUFFER_TYPE_IP           0x10
+#define BUFFER_TYPE_ARP_PROBE    0x20
 
 typedef struct {
   unsigned char hw_addr[ETH_ALEN];

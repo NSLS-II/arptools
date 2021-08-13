@@ -185,7 +185,8 @@ void * mysql_thread(void * arg) {
         if (mysql_real_query(con, sql_buffer, strlen(sql_buffer))) {
           mysql_print_error(con);
         }
-      } else if (arp->type == BUFFER_TYPE_UNKNOWN) {
+      } else if ((arp->type == BUFFER_TYPE_UNKNOWN) ||
+                 (arp->type == BUFFER_TYPE_ARP_PROBE)) {
         snprintf(sql_buffer, sizeof(sql_buffer),
                 "INSERT INTO arpdata "
                 "(hw_address, location, label, "
