@@ -161,78 +161,153 @@ int capture_arp_packet(arpwatch_params *params,
     *(d->dhcp_name) = '\0';
     d->vlan = ether_get_vlan(packet);
     buffer_advance_head(data, 1);
-  } else {
-    // A Valid IPV4 ARP Packet
 
-    buffer_data *data = &params->data_buffer;
-
-    if ((htons(aptr->ar_op) == ARPOP_REPLY) ||
-        (htons(aptr->ar_op) == ARPOP_REQUEST)) {
-      bptr = (struct arpbdy *) (packet +
-                                ether_header_size(packet) +
-                                sizeof(struct arphdr));
-
-      if (memcmp(params->hwaddress, bptr->ar_sha, ETH_ALEN) ||
-          !params->filter_self) {
-        // Check for ARP Probes
-        if ((bptr->ar_sip.s_addr == 0) &&
-            !memcmp(bptr->ar_tha, mac_zeros, ETH_ALEN)) {
-          // ARP Probe!
-          DEBUG_PRINT("Iface : %s Packet time : %ld ARP PROBE :  %-20s %-16s\n",
-                      params->iface,
-                      pkthdr->ts.tv_sec,
-                      ether_ntoa((const struct ether_addr *)&bptr->ar_sha),
-                      inet_ntoa(bptr->ar_sip));
-
-          arp_data *d = buffer_get_head(data);
-          d->type = BUFFER_TYPE_ARP_PROBE;
-          d->ip_addr = bptr->ar_tip;
-          memcpy(d->hw_addr, bptr->ar_sha, ETH_ALEN);
-          d->ts = pkthdr->ts;
-          *(d->dhcp_name) = '\0';
-          d->vlan = ether_get_vlan(packet);
-          buffer_advance_head(data, 1);
-        } else {
-          DEBUG_PRINT("Iface : %s Packet time : %ld ARP Source:  %-20s %-16s\n",
-                      params->iface,
-                      pkthdr->ts.tv_sec,
-                      ether_ntoa((const struct ether_addr *)&bptr->ar_sha),
-                      inet_ntoa(bptr->ar_sip));
-
-          arp_data *d = buffer_get_head(data);
-          d->type = BUFFER_TYPE_ARP_SRC;
-          d->ip_addr = bptr->ar_sip;
-          memcpy(d->hw_addr, bptr->ar_sha, ETH_ALEN);
-          d->ts = pkthdr->ts;
-          *(d->dhcp_name) = '\0';
-          d->vlan = ether_get_vlan(packet);
-
-          buffer_advance_head(data, 1);
-
-          if (htons(aptr->ar_op) == ARPOP_REPLY) {
-            DEBUG_PRINT("Iface : %s Packet time : %ld "
-                        "ARP Dest  :  %-20s %-16s\n",
-                        params->iface,
-                        pkthdr->ts.tv_sec,
-                        ether_ntoa((const struct ether_addr *)&bptr->ar_tha),
-                        inet_ntoa(bptr->ar_tip));
-
-            arp_data *d = buffer_get_head(data);
-            d->type = BUFFER_TYPE_ARP_DST;
-            d->ip_addr = bptr->ar_tip;
-            memcpy(d->hw_addr, bptr->ar_tha, ETH_ALEN);
-            d->ts = pkthdr->ts;
-            *(d->dhcp_name) = '\0';
-            d->vlan = ether_get_vlan(packet);
-            buffer_advance_head(data, 1);
-          }
-        }
-      } else {
-        DEBUG_COMMENT("Skipping packet ... MAC matches host\n");
-      }
-    }
+    return 0;
   }
 
+  // A Valid IPV4 ARP Packet
+
+  buffer_data *data = &params->data_buffer;
+
+  if ((htons(aptr->ar_op) != ARPOP_REPLY) &&
+      (htons(aptr->ar_op) != ARPOP_REQUEST)) {
+    DEBUG_PRINT("Invalid ARP operation 0x%02X\n", htons(aptr->ar_op));
+    return 0;
+  }
+
+  bptr = (struct arpbdy *) (packet +
+                            ether_header_size(packet) +
+                            sizeof(struct arphdr));
+
+  if (!memcmp(params->hwaddress, bptr->ar_sha, ETH_ALEN) &&
+    params->filter_self) {
+    DEBUG_COMMENT("Skipping packet ... MAC matches host\n");
+      return 0;
+  }
+
+  //
+  // Check for ARP Probes
+  // ARP Probes have the source IP Address set to all zeros
+  //
+  if ((bptr->ar_sip.s_addr == 0) &&
+      !memcmp(bptr->ar_tha, mac_zeros, ETH_ALEN)) {
+    // ARP Probe!
+    DEBUG_PRINT("Iface : %s Packet time : %ld ARP PROBE :  %-20s %-16s\n",
+                params->iface,
+                pkthdr->ts.tv_sec,
+                ether_ntoa((const struct ether_addr *)&bptr->ar_sha),
+                inet_ntoa(bptr->ar_sip));
+
+    arp_data *d = buffer_get_head(data);
+    d->type = BUFFER_TYPE_ARP_PROBE;
+    d->ip_addr = bptr->ar_tip;
+    memcpy(d->hw_addr, bptr->ar_sha, ETH_ALEN);
+    d->ts = pkthdr->ts;
+    *(d->dhcp_name) = '\0';
+    d->vlan = ether_get_vlan(packet);
+    buffer_advance_head(data, 1);
+
+    return 0;
+  }
+
+  //
+  // Check for Gratuitous ARP Requests
+  // These have Sender IP == Destination IP
+  // Target MAC Will be set to zeros or FF
+  //
+
+  if ((bptr->ar_sip.s_addr == bptr->ar_tip.s_addr) &&
+      (!memcmp(bptr->ar_tha, mac_bcast, ETH_ALEN) ||
+       !memcmp(bptr->ar_tha, mac_zeros, ETH_ALEN))) {
+    DEBUG_PRINT("Iface : %s Packet time : %ld ARP GRAT :  %-20s %-16s\n",
+                params->iface,
+                pkthdr->ts.tv_sec,
+                ether_ntoa((const struct ether_addr *)&bptr->ar_sha),
+                inet_ntoa(bptr->ar_sip));
+
+    arp_data *d = buffer_get_head(data);
+    d->type = BUFFER_TYPE_ARP_GRAT;
+    d->ip_addr = bptr->ar_sip;
+    memcpy(d->hw_addr, bptr->ar_sha, ETH_ALEN);
+    d->ts = pkthdr->ts;
+    *(d->dhcp_name) = '\0';
+    d->vlan = ether_get_vlan(packet);
+
+    buffer_advance_head(data, 1);
+
+    return 0;
+  }
+
+  //
+  // Ok if we got to here this is a normal ARP
+  // Request / Reply .... few...
+  //
+
+  DEBUG_PRINT("Iface : %s Packet time : %ld ARP Source:  %-20s %-16s\n",
+              params->iface,
+              pkthdr->ts.tv_sec,
+              ether_ntoa((const struct ether_addr *)&bptr->ar_sha),
+              inet_ntoa(bptr->ar_sip));
+
+  arp_data *d = buffer_get_head(data);
+  d->type = BUFFER_TYPE_ARP_SRC;
+  d->ip_addr = bptr->ar_sip;
+  memcpy(d->hw_addr, bptr->ar_sha, ETH_ALEN);
+  d->ts = pkthdr->ts;
+  *(d->dhcp_name) = '\0';
+  d->vlan = ether_get_vlan(packet);
+
+  buffer_advance_head(data, 1);
+
+  //
+  // If we have a ARP Reply we can capture both
+  // MAC addresses
+  //
+
+  if (htons(aptr->ar_op) == ARPOP_REPLY) {
+    DEBUG_PRINT("Iface : %s Packet time : %ld "
+                "ARP Dest  :  %-20s %-16s\n",
+                params->iface,
+                pkthdr->ts.tv_sec,
+                ether_ntoa((const struct ether_addr *)&bptr->ar_tha),
+                inet_ntoa(bptr->ar_tip));
+
+    arp_data *d = buffer_get_head(data);
+    d->type = BUFFER_TYPE_ARP_DST;
+    d->ip_addr = bptr->ar_tip;
+    memcpy(d->hw_addr, bptr->ar_tha, ETH_ALEN);
+    d->ts = pkthdr->ts;
+    *(d->dhcp_name) = '\0';
+    d->vlan = ether_get_vlan(packet);
+    buffer_advance_head(data, 1);
+  }
+
+  return 0;
+}
+
+int capture_epics_packet(arpwatch_params *params,
+                         const struct pcap_pkthdr* pkthdr,
+                         const u_char* packet) {
+  struct ether_header *eptr = (struct ether_header *) packet;
+  struct ipbdy *iptr = (struct ipbdy *) (packet +
+                                         ether_header_size(packet));
+  buffer_data *data = &params->data_buffer;
+  arp_data *d = buffer_get_head(data);
+
+#ifdef DEBUG
+  DEBUG_PRINT("EPICS UDP Packet :  %-20s %-16s\n",
+              ether_ntoa((const struct ether_addr *)&eptr->ether_shost),
+              inet_ntoa(iptr->ip_sip));
+#else
+  (void)packet;
+  (void)iptr;
+  (void)eptr;
+#endif
+
+  // Set to DHCP type
+  d->type = BUFFER_TYPE_EPICS;
+
+  (void)pkthdr;
   return 0;
 }
 
@@ -352,6 +427,8 @@ int capture_ip_packet(arpwatch_params *params,
     if ((htons(uptr->sport) == DHCP_DISCOVER_SPORT) &&
         (htons(uptr->dport) == DHCP_DISCOVER_DPORT)) {
       capture_dhcp_packet(params, pkthdr, packet);
+    } else if (htons(uptr->dport) == EPICS_DPORT) {
+      capture_epics_packet(params, pkthdr, packet);
     }
   }
 

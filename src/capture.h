@@ -56,6 +56,7 @@
 #define DHCP_OPCODE_END       255
 #define NETBIOS_NAMELEN       32
 #define NETBIOS_PORT          137
+#define EPICS_DPORT           5064
 
 struct ethernet_header {
   uint8_t ether_dhost[ETH_ALEN];
