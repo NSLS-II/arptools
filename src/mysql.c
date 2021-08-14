@@ -117,9 +117,9 @@ void * mysql_thread(void * arg) {
       const char *hw_addr = int_to_mac(arp->hw_addr);
       const char *ip_addr = inet_ntoa(arp->ip_addr);
 
-      if ((arp->type == BUFFER_TYPE_ARP) ||
-          (arp->type == BUFFER_TYPE_UDP) ||
-          (arp->type == BUFFER_TYPE_IP)) {
+      if ((arp->type | BUFFER_TYPE_ARP) ||
+          (arp->type | BUFFER_TYPE_UDP) ||
+          (arp->type | BUFFER_TYPE_IP)) {
         snprintf(sql_buffer, sizeof(sql_buffer),
                 "INSERT INTO arpdata "
                 "(hw_address, ip_address, location, "
@@ -145,7 +145,7 @@ void * mysql_thread(void * arg) {
         if (mysql_real_query(con, sql_buffer, strlen(sql_buffer))) {
           mysql_print_error(con);
         }
-      } else if (arp->type == BUFFER_TYPE_DHCP) {
+      } else if (arp->type | BUFFER_TYPE_DHCP) {
         snprintf(sql_buffer, sizeof(sql_buffer),
                 "INSERT INTO arpdata "
                 "(hw_address, location, label, "
@@ -169,7 +169,7 @@ void * mysql_thread(void * arg) {
         if (mysql_real_query(con, sql_buffer, strlen(sql_buffer))) {
           mysql_print_error(con);
         }
-      } else if (arp->type == BUFFER_TYPE_UNKNOWN) {
+      } else if (arp->type | BUFFER_TYPE_UNKNOWN) {
         snprintf(sql_buffer, sizeof(sql_buffer),
                 "INSERT INTO arpdata "
                 "(hw_address, location, label, "
