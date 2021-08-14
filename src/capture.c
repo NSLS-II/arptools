@@ -291,25 +291,37 @@ int capture_epics_packet(arpwatch_params *params,
                          const struct pcap_pkthdr* pkthdr,
                          const u_char* packet) {
   struct ether_header *eptr = (struct ether_header *) packet;
-  struct ipbdy *iptr = (struct ipbdy *) (packet +
-                                         ether_header_size(packet));
-  buffer_data *data = &params->data_buffer;
-  arp_data *d = buffer_get_head(data);
 
-#ifdef DEBUG
+  size_t pos = ether_header_size(packet);
+  struct ipbdy *iptr = (struct ipbdy *) (packet + pos);
+
+  pos += sizeof(struct ipbdy);
+  if (pos > pkthdr->len ) return -1;
+  struct ca_proto_version *caver = (struct ca_proto_version *)
+                                   (packet + pos);
+
+  pos += sizeof(struct ca_proto_version);
+  if (pos > pkthdr->len ) return -1;
+  struct ca_proto_search *casearch = (struct ca_proto_search *)
+                                     (packet + pos);
+
+  pos += sizeof(struct ca_proto_search);
+  // buffer_data *data = &params->data_buffer;
+  // arp_data *d = buffer_get_head(data);
+
   DEBUG_PRINT("EPICS UDP Packet :  %-20s %-16s\n",
               ether_ntoa((const struct ether_addr *)&eptr->ether_shost),
               inet_ntoa(iptr->ip_sip));
-#else
-  (void)packet;
-  (void)iptr;
-  (void)eptr;
-#endif
 
   // Set to DHCP type
-  d->type = BUFFER_TYPE_EPICS;
+  // d->type = BUFFER_TYPE_EPICS;
 
-  (void)pkthdr;
+  DEBUG_PRINT("Search String %s\n", (packet + pos));
+
+  (void)casearch;
+  (void)caver;
+  (void)params;
+
   return 0;
 }
 

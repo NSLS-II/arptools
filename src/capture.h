@@ -136,6 +136,24 @@ struct netbiosbdy {
   uint16_t _class;
 } __attribute__((__packed__));
 
+struct ca_proto_version {
+  uint16_t command;
+  uint16_t payload_size;
+  uint16_t priority;
+  uint16_t version;
+  uint32_t reserved1;
+  uint32_t reserved2;
+} __attribute__((__packed__));
+
+struct ca_proto_search {
+  uint16_t command;
+  uint16_t payload_size;
+  uint16_t reply;
+  uint16_t version;
+  uint32_t cid1;
+  uint32_t cid2;
+} __attribute__((__packed__));
+
 int capture_start(arpwatch_params *params);
 int capture_stop(void);
 
