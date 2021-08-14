@@ -121,40 +121,25 @@ void * mysql_thread(void * arg) {
           (arp->type == BUFFER_TYPE_ARP_DST) ||
           (arp->type == BUFFER_TYPE_UDP) ||
           (arp->type == BUFFER_TYPE_IP)) {
-        int type_arp = 0;
-        int type_udp = 0;
-
-        if ((arp->type == BUFFER_TYPE_ARP_SRC) ||
-            (arp->type == BUFFER_TYPE_ARP_DST)) {
-          type_arp = 1;
-        }
-        if (arp->type == BUFFER_TYPE_UDP) {
-          type_udp = 1;
-        }
-
         snprintf(sql_buffer, sizeof(sql_buffer),
                 "INSERT INTO arpdata "
                 "(hw_address, ip_address, location, "
-                "label, last_seen, hostname, "
-                "type_arp, type_udp, vlan) "
+                "label, type, last_seen, hostname, vlan) "
                 "VALUES ('%s', '%s', '%s', '%s', "
-                "'%s', '%s', %d, %d, %s) "
+                "%d, '%s', '%s', %s) "
                 "ON DUPLICATE KEY UPDATE "
                 "ip_address = '%s', "
                 "location = '%s', "
                 "label = '%s', "
+                "type = type | %d, "
                 "last_seen = '%s', "
                 "hostname = '%s', "
-                "type_arp = %d, "
-                "type_udp = %d, "
                 "vlan = %s;",
                 hw_addr,
                 ip_addr, params->location, params->label,
-                time_buffer, hostname,
-                type_arp, type_udp, vlan,
+                arp->type, time_buffer, hostname, vlan,
                 ip_addr, params->location, params->label,
-                time_buffer, hostname,
-                type_arp, type_udp, vlan);
+                arp->type, time_buffer, hostname, vlan);
 
         DEBUG_PRINT("ARP/IP/UDP %d SQL query : %s\n", arp->type, sql_buffer);
 

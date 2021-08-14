@@ -9,6 +9,7 @@ CREATE TABLE arpdata(
   vlan              SMALLINT,
   location          VARCHAR(256) NOT NULL,
   label             VARCHAR(256) NOT NULL,
+  type              SMALLINT UNSIGNED,
   last_seen         DATETIME,
   created           DATETIME DEFAULT CURRENT_TIMESTAMP,
   registered        BOOL DEFAULT false,
