@@ -310,7 +310,7 @@ int capture_epics_packet(arpwatch_params *params,
     if (msg->command == 0) {
       DEBUG_COMMENT("CA PROTO VERSION\n");
       pos += sizeof(struct ca_proto_msg);
-    } else if (htons(msg->command == 6)) {
+    } else if (htons(msg->command) == 6) {
       DEBUG_COMMENT("CA Search Request\n");
       pos += sizeof(struct ca_proto_msg);
       char name[256];
