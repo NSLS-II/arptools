@@ -136,13 +136,13 @@ struct netbiosbdy {
   uint16_t _class;
 } __attribute__((__packed__));
 
-struct ca_proto_version {
+struct ca_proto_msg {
   uint16_t command;
   uint16_t payload_size;
-  uint16_t priority;
-  uint16_t version;
-  uint32_t reserved1;
-  uint32_t reserved2;
+  uint16_t data;
+  uint16_t count;
+  uint32_t param1;
+  uint32_t param2;
 } __attribute__((__packed__));
 
 struct ca_proto_search {

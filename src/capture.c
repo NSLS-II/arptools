@@ -292,34 +292,43 @@ int capture_epics_packet(arpwatch_params *params,
                          const u_char* packet) {
   struct ether_header *eptr = (struct ether_header *) packet;
 
-  size_t pos = ether_header_size(packet);
+  unsigned int pos = ether_header_size(packet);
   struct ipbdy *iptr = (struct ipbdy *) (packet + pos);
 
   pos += sizeof(struct ipbdy);
+  pos += sizeof(struct udphdr);
   if (pos > pkthdr->len ) return -1;
-  struct ca_proto_version *caver = (struct ca_proto_version *)
-                                   (packet + pos);
-
-  pos += sizeof(struct ca_proto_version);
-  if (pos > pkthdr->len ) return -1;
-  struct ca_proto_search *casearch = (struct ca_proto_search *)
-                                     (packet + pos);
-
-  pos += sizeof(struct ca_proto_search);
-  // buffer_data *data = &params->data_buffer;
-  // arp_data *d = buffer_get_head(data);
 
   DEBUG_PRINT("EPICS UDP Packet :  %-20s %-16s\n",
               ether_ntoa((const struct ether_addr *)&eptr->ether_shost),
               inet_ntoa(iptr->ip_sip));
 
+  while (pos < pkthdr->len) {
+    // Process messages
+    struct ca_proto_msg *msg = (struct ca_proto_msg *)
+                               (packet + pos);
+    if (msg->command == 0) {
+      DEBUG_COMMENT("CA PROTO VERSION\n");
+      pos += sizeof(struct ca_proto_msg);
+    } else if (msg->command == 6) {
+      DEBUG_COMMENT("CA Search Request\n");
+      pos += sizeof(struct ca_proto_msg);
+      char name[256];
+      memset(name, 0, sizeof(name));
+      memcpy(name, packet + pos,
+              msg->payload_size > sizeof(name) ?
+              sizeof(name) : msg->payload_size);
+      pos += msg->payload_size;
+      DEBUG_PRINT("Search String %s\n", name);
+    } else {
+      break;
+    }
+  }
+
+
   // Set to DHCP type
   // d->type = BUFFER_TYPE_EPICS;
 
-  DEBUG_PRINT("Search String %s\n", (packet + pos));
-
-  (void)casearch;
-  (void)caver;
   (void)params;
 
   return 0;
