@@ -308,10 +308,10 @@ int capture_epics_packet(arpwatch_params *params,
     struct ca_proto_msg *msg = (struct ca_proto_msg *)
                                (packet + pos);
     if (msg->command == 0) {
-      DEBUG_COMMENT("CA PROTO VERSION\n");
+      DEBUG_COMMENT("Valid CA_PROTO_VERSION\n");
       pos += sizeof(struct ca_proto_msg);
     } else if (htons(msg->command) == 6) {
-      DEBUG_COMMENT("CA Search Request\n");
+      DEBUG_COMMENT("Valid CA_SEARCH_REQUEST\n");
       pos += sizeof(struct ca_proto_msg);
       char name[256];
       memset(name, 0, sizeof(name));
@@ -319,12 +319,16 @@ int capture_epics_packet(arpwatch_params *params,
               msg->payload_size > sizeof(name) ?
               sizeof(name) : msg->payload_size);
       pos += msg->payload_size;
-      DEBUG_PRINT("Search String %s\n", name);
+      DEBUG_PRINT("PV : %s\n", name);
     } else {
       break;
     }
   }
 
+#ifndef DEBUG
+  (void)iptr;
+  (void)eptr;
+#endif
 
   // Set to EPICS TYPE
   buffer_data *data = &params->data_buffer;
