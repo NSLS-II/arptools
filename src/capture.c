@@ -214,11 +214,13 @@ int capture_arp_packet(arpwatch_params *params,
   // Check for Gratuitous ARP Requests
   // These have Sender IP == Destination IP
   // Target MAC Will be set to zeros or FF
+  // Reply can have THA == SHA
   //
 
   if ((bptr->ar_sip.s_addr == bptr->ar_tip.s_addr) &&
       (!memcmp(bptr->ar_tha, mac_bcast, ETH_ALEN) ||
-       !memcmp(bptr->ar_tha, mac_zeros, ETH_ALEN))) {
+       !memcmp(bptr->ar_tha, mac_zeros, ETH_ALEN) ||
+       !memcmp(bptr->ar_sha, bptr->ar_tha, ETH_ALEN))) {
     DEBUG_PRINT("Iface : %s Packet time : %ld ARP GRAT :  %-20s %-16s\n",
                 params->iface,
                 pkthdr->ts.tv_sec,
