@@ -59,6 +59,11 @@
 #define BUFFER_TYPE_EPICS        0x0040
 #define BUFFER_TYPE_ARP_GRAT     0x0080
 
+#define BUFFER_TYPE_ARP         (BUFFER_TYPE_ARP_SRC      | \
+                                 BUFFER_TYPE_ARP_DST      | \
+                                 BUFFER_TYPE_ARP_PROBE    | \
+                                 BUFFER_TYPE_ARP_GRAT)
+
 typedef struct {
   unsigned char hw_addr[ETH_ALEN];
   struct in_addr ip_addr;

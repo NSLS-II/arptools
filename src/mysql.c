@@ -117,8 +117,7 @@ void * mysql_thread(void * arg) {
       const char *hw_addr = int_to_mac(arp->hw_addr);
       const char *ip_addr = inet_ntoa(arp->ip_addr);
 
-      if ((arp->type == BUFFER_TYPE_ARP_SRC) ||
-          (arp->type == BUFFER_TYPE_ARP_DST) ||
+      if ((arp->type == BUFFER_TYPE_ARP) ||
           (arp->type == BUFFER_TYPE_UDP) ||
           (arp->type == BUFFER_TYPE_IP)) {
         snprintf(sql_buffer, sizeof(sql_buffer),
@@ -150,41 +149,43 @@ void * mysql_thread(void * arg) {
         snprintf(sql_buffer, sizeof(sql_buffer),
                 "INSERT INTO arpdata "
                 "(hw_address, location, label, "
-                "last_seen, dhcp_name, type_dhcp, vlan) "
-                "VALUES ('%s', '%s', '%s', '%s', '%s', true, %s) "
+                "last_seen, dhcp_name, type, vlan) "
+                "VALUES ('%s', '%s', '%s', '%s', '%s', %d, %s) "
                 "ON DUPLICATE KEY UPDATE "
                 "location = '%s', "
                 "label = '%s', "
                 "last_seen = '%s', "
                 "dhcp_name = '%s', "
-                "type_dhcp = true, "
+                "type = type | %d, "
                 "vlan = %s;",
                 hw_addr,
                 params->location, params->label, time_buffer,
-                arp->dhcp_name, vlan,
+                arp->dhcp_name, arp->type, vlan,
                 params->location, params->label, time_buffer,
-                arp->dhcp_name, vlan);
+                arp->dhcp_name, arp->type, vlan);
 
         DEBUG_PRINT("DNS NAME SQL query : %s\n", sql_buffer);
 
         if (mysql_real_query(con, sql_buffer, strlen(sql_buffer))) {
           mysql_print_error(con);
         }
-      } else if ((arp->type == BUFFER_TYPE_UNKNOWN) ||
-                 (arp->type == BUFFER_TYPE_ARP_PROBE)) {
+      } else if (arp->type == BUFFER_TYPE_UNKNOWN) {
         snprintf(sql_buffer, sizeof(sql_buffer),
                 "INSERT INTO arpdata "
                 "(hw_address, location, label, "
-                "last_seen, vlan) "
-                "VALUES ('%s', '%s', '%s', '%s', %s) "
+                "last_seen, type, vlan) "
+                "VALUES ('%s', '%s', '%s', '%s', %d, %s) "
                 "ON DUPLICATE KEY UPDATE "
                 "location = '%s', "
                 "label = '%s', "
                 "last_seen = '%s', "
+                "type = type | %d, "
                 "vlan = %s;",
                 hw_addr,
-                params->location, params->label, time_buffer, vlan,
-                params->location, params->label, time_buffer, vlan);
+                params->location, params->label, time_buffer,
+                arp->type, vlan,
+                params->location, params->label, time_buffer,
+                arp->type, vlan);
 
         DEBUG_PRINT("Unknown name SQL query : %s\n", sql_buffer);
 
