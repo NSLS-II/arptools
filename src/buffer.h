@@ -49,15 +49,16 @@
 #define BUFFER_ERR_MEMORY        1
 #define BUFFER_NOERR             0
 #define BUFFER_NAME_MAX          256
-#define BUFFER_TYPE_ARP_SRC      0x0000
-#define BUFFER_TYPE_ARP_DST      0x0001
-#define BUFFER_TYPE_UDP          0x0002
-#define BUFFER_TYPE_DHCP         0x0004
-#define BUFFER_TYPE_UNKNOWN      0x0008
-#define BUFFER_TYPE_IP           0x0010
-#define BUFFER_TYPE_ARP_PROBE    0x0020
-#define BUFFER_TYPE_EPICS        0x0040
-#define BUFFER_TYPE_ARP_GRAT     0x0080
+
+#define BUFFER_TYPE_UNKNOWN      0x0000
+#define BUFFER_TYPE_ARP_SRC      0x0001
+#define BUFFER_TYPE_ARP_DST      0x0002
+#define BUFFER_TYPE_ARP_PROBE    0x0004
+#define BUFFER_TYPE_ARP_GRAT     0x0008
+#define BUFFER_TYPE_UDP          0x0010
+#define BUFFER_TYPE_DHCP         0x0020
+#define BUFFER_TYPE_IP           0x0040
+#define BUFFER_TYPE_EPICS        0x0080
 
 #define BUFFER_TYPE_ARP         (BUFFER_TYPE_ARP_SRC      | \
                                  BUFFER_TYPE_ARP_DST      | \
