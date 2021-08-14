@@ -326,8 +326,10 @@ int capture_epics_packet(arpwatch_params *params,
   }
 
 
-  // Set to DHCP type
-  // d->type = BUFFER_TYPE_EPICS;
+  // Set to EPICS TYPE
+  buffer_data *data = &params->data_buffer;
+  arp_data *d = buffer_get_head(data);
+  d->type = BUFFER_TYPE_EPICS;
 
   (void)params;
 
