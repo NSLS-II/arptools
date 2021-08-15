@@ -287,6 +287,34 @@ int capture_arp_packet(arpwatch_params *params,
   return 0;
 }
 
+int capture_epics_pva_packet(arpwatch_params *params,
+                             const struct pcap_pkthdr* pkthdr,
+                             const u_char* packet) {
+#ifdef DEBUG
+  (void)pkthdr;
+  struct ether_header *eptr = (struct ether_header *) packet;
+
+  unsigned int pos = ether_header_size(packet);
+  struct ipbdy *iptr = (struct ipbdy *) (packet + pos);
+
+  DEBUG_PRINT("EPICS PVA UDP Packet :  %-20s %-16s\n",
+              ether_ntoa((const struct ether_addr *)&eptr->ether_shost),
+              inet_ntoa(iptr->ip_sip));
+#else
+  (void)pkthdr;
+  (void)packet;
+#endif
+
+  // Set to EPICS TYPE
+  buffer_data *data = &params->data_buffer;
+  arp_data *d = buffer_get_head(data);
+  d->type = BUFFER_TYPE_EPICS_PVA;
+
+  (void)params;
+
+  return 0;
+}
+
 int capture_epics_packet(arpwatch_params *params,
                          const struct pcap_pkthdr* pkthdr,
                          const u_char* packet) {
@@ -334,8 +362,6 @@ int capture_epics_packet(arpwatch_params *params,
   buffer_data *data = &params->data_buffer;
   arp_data *d = buffer_get_head(data);
   d->type = BUFFER_TYPE_EPICS;
-
-  (void)params;
 
   return 0;
 }
@@ -458,6 +484,8 @@ int capture_ip_packet(arpwatch_params *params,
       capture_dhcp_packet(params, pkthdr, packet);
     } else if (htons(uptr->dport) == EPICS_DPORT) {
       capture_epics_packet(params, pkthdr, packet);
+    } else if (htons(uptr->dport) == EPICS_PVA_DPORT) {
+      capture_epics_pva_packet(params, pkthdr, packet);
     }
   }
 

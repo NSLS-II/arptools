@@ -59,6 +59,7 @@
 #define BUFFER_TYPE_DHCP         0x0020
 #define BUFFER_TYPE_IP           0x0040
 #define BUFFER_TYPE_EPICS        0x0080
+#define BUFFER_TYPE_EPICS_PVA    0x0100
 
 #define BUFFER_TYPE_ARP         (BUFFER_TYPE_ARP_SRC      | \
                                  BUFFER_TYPE_ARP_DST      | \
