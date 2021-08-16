@@ -61,7 +61,7 @@ pcap_t *pcap_description = NULL;
 unsigned char mac_zeros[] = {0, 0, 0, 0, 0, 0};
 unsigned char mac_bcast[] = {255, 255, 255, 255, 255, 255};
 
-int dhcp_message_type[] = {0, // There is no zero message type
+int dhcp_message_type[] = {0,  // Padding, no zero msg type
                            BUFFER_TYPE_DHCP_DISCOVER,
                            BUFFER_TYPE_DHCP_OFFER,
                            BUFFER_TYPE_DHCP_REQUEST,
@@ -435,11 +435,11 @@ int capture_dhcp_packet(arpwatch_params *params,
       if (len == 1) {
         // This should be 1 byte
         int opcode = *((uint8_t*)optr);
-        if ((opcode > 0) && (opcode < sizeof(dhcp_message_type))) {
-          DEBUG_PRINT("Type len = %d opcode = %d\n", len, opcode);
+        if ((opcode > 0) && (opcode < (int)sizeof(dhcp_message_type))) {
+          DEBUG_PRINT("DHCP message type = %d\n", opcode);
           d->type = dhcp_message_type[opcode];
         } else {
-          ERROR_PRINT("Error: Invalid opcode %d\n", opcode);
+          ERROR_PRINT("Error: DHCP Invalid message type %d\n", opcode);
         }
       }
     }
