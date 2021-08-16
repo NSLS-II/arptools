@@ -46,18 +46,19 @@
 #define ETHERTYPE_8021Q       0x8100
 #endif
 
-#define DHCP_SNLEN            64
-#define DHCP_BFLEN            128
-#define IP_PROTO_UDP          0x11
-#define DHCP_DISCOVER_SPORT   68
-#define DHCP_DISCOVER_DPORT   67
-#define DHCP_HWLEN            16
-#define DHCP_OPCODE_HOSTNAME  12
-#define DHCP_OPCODE_END       255
-#define NETBIOS_NAMELEN       32
-#define NETBIOS_PORT          137
-#define EPICS_DPORT           5064
-#define EPICS_PVA_DPORT       5076
+#define DHCP_SNLEN                  64
+#define DHCP_BFLEN                  128
+#define IP_PROTO_UDP                0x11
+#define DHCP_DISCOVER_SPORT         68
+#define DHCP_DISCOVER_DPORT         67
+#define DHCP_HWLEN                  16
+#define DHCP_OPCODE_HOSTNAME        12
+#define DHCP_OPCODE_MESSAGE_TYPE    53
+#define DHCP_OPCODE_END             255
+#define NETBIOS_NAMELEN             32
+#define NETBIOS_PORT                137
+#define EPICS_DPORT                 5064
+#define EPICS_PVA_DPORT             5076
 
 struct ethernet_header {
   uint8_t ether_dhost[ETH_ALEN];

@@ -61,6 +61,15 @@ pcap_t *pcap_description = NULL;
 unsigned char mac_zeros[] = {0, 0, 0, 0, 0, 0};
 unsigned char mac_bcast[] = {255, 255, 255, 255, 255, 255};
 
+int dhcp_message_type[] = {0, // There is no zero message type
+                           BUFFER_TYPE_DHCP_DISCOVER,
+                           BUFFER_TYPE_DHCP_OFFER,
+                           BUFFER_TYPE_DHCP_REQUEST,
+                           BUFFER_TYPE_DHCP_DECLINE,
+                           BUFFER_TYPE_DHCP_ACK,
+                           BUFFER_TYPE_DHCP_NACK,
+                           BUFFER_TYPE_DHCP_RELEASE };
+
 int ether_header_size(const u_char *packet) {
   struct ethernet_header *hdr = (struct ethernet_header *)packet;
   if (ntohs(hdr->ether_type) == ETHERTYPE_8021Q) {
@@ -384,7 +393,7 @@ int capture_dhcp_packet(arpwatch_params *params,
 #endif
 
   // Set to DHCP type
-  d->type = BUFFER_TYPE_DHCP;
+  d->type = BUFFER_TYPE_DHCP_ERR;
 
   // Set default hostname
   strncpy(d->dhcp_name, "(none)", BUFFER_NAME_MAX);
@@ -421,6 +430,17 @@ int capture_dhcp_packet(arpwatch_params *params,
         DEBUG_PRINT("DHCP Hostname : %s\n", _name);
       } else {
         ERROR_COMMENT("DHCP Name too long\n");
+      }
+    } else if (code == DHCP_OPCODE_MESSAGE_TYPE) {
+      if (len == 1) {
+        // This should be 1 byte
+        int opcode = *((uint8_t*)optr);
+        if ((opcode > 0) && (opcode < sizeof(dhcp_message_type))) {
+          DEBUG_PRINT("Type len = %d opcode = %d\n", len, opcode);
+          d->type = dhcp_message_type[opcode];
+        } else {
+          ERROR_PRINT("Error: Invalid opcode %d\n", opcode);
+        }
       }
     }
 

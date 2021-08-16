@@ -50,21 +50,36 @@
 #define BUFFER_NOERR             0
 #define BUFFER_NAME_MAX          256
 
-#define BUFFER_TYPE_UNKNOWN      0x0000
-#define BUFFER_TYPE_ARP_SRC      0x0001
-#define BUFFER_TYPE_ARP_DST      0x0002
-#define BUFFER_TYPE_ARP_PROBE    0x0004
-#define BUFFER_TYPE_ARP_GRAT     0x0008
-#define BUFFER_TYPE_UDP          0x0010
-#define BUFFER_TYPE_DHCP         0x0020
-#define BUFFER_TYPE_IP           0x0040
-#define BUFFER_TYPE_EPICS        0x0080
-#define BUFFER_TYPE_EPICS_PVA    0x0100
+#define BUFFER_TYPE_UNKNOWN           0x00000000
+#define BUFFER_TYPE_ARP_SRC           0x00000001
+#define BUFFER_TYPE_ARP_DST           0x00000002
+#define BUFFER_TYPE_ARP_PROBE         0x00000004
+#define BUFFER_TYPE_ARP_GRAT          0x00000008
+#define BUFFER_TYPE_UDP               0x00000010
+#define BUFFER_TYPE_DHCP_ERR          0x00000020
+#define BUFFER_TYPE_IP                0x00000040
+#define BUFFER_TYPE_EPICS             0x00000080
+#define BUFFER_TYPE_EPICS_PVA         0x00000100
+#define BUFFER_TYPE_DHCP_DISCOVER     0x00000200
+#define BUFFER_TYPE_DHCP_OFFER        0x00000400
+#define BUFFER_TYPE_DHCP_REQUEST      0x00000800
+#define BUFFER_TYPE_DHCP_DECLINE      0x00001000
+#define BUFFER_TYPE_DHCP_ACK          0x00002000
+#define BUFFER_TYPE_DHCP_NACK         0x00004000
+#define BUFFER_TYPE_DHCP_RELEASE      0x00008000
 
-#define BUFFER_TYPE_ARP         (BUFFER_TYPE_ARP_SRC      | \
-                                 BUFFER_TYPE_ARP_DST      | \
-                                 BUFFER_TYPE_ARP_PROBE    | \
-                                 BUFFER_TYPE_ARP_GRAT)
+#define BUFFER_TYPE_ARP               (BUFFER_TYPE_ARP_SRC      | \
+                                       BUFFER_TYPE_ARP_DST      | \
+                                       BUFFER_TYPE_ARP_PROBE    | \
+                                       BUFFER_TYPE_ARP_GRAT)
+
+#define BUFFER_TYPE_DHCP              (BUFFER_TYPE_DHCP_DISCOVER  | \
+                                       BUFFER_TYPE_DHCP_OFFER     | \
+                                       BUFFER_TYPE_DHCP_REQUEST   | \
+                                       BUFFER_TYPE_DHCP_DECLINE   | \
+                                       BUFFER_TYPE_DHCP_ACK       | \
+                                       BUFFER_TYPE_DHCP_NACK      | \
+                                       BUFFER_TYPE_DHCP_RELEASE)
 
 typedef struct {
   unsigned char hw_addr[ETH_ALEN];
