@@ -164,7 +164,7 @@ void * mysql_thread(void * arg) {
                 params->location, params->label, time_buffer,
                 arp->dhcp_name, arp->type, vlan);
 
-        DEBUG_PRINT("DNS NAME SQL query : %s\n", sql_buffer);
+        DEBUG_PRINT("DHCP SQL query : %s\n", sql_buffer);
 
         if (mysql_real_query(con, sql_buffer, strlen(sql_buffer))) {
           mysql_print_error(con);
