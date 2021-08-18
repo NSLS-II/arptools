@@ -54,7 +54,7 @@ stages:
         $(cmake) ..
         VERBOSE=1 make
       displayName: Build
-      condition: neq(variables.arch, 'armhf'))
+      condition: nq(variables.arch, 'armhf'))
 
     - script: |
         GITDESC=$(git describe --abbrev=0)
