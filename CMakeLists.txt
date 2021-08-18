@@ -127,9 +127,9 @@ execute_process(COMMAND mysql_config --libs
   OUTPUT_VARIABLE MYSQL_LIBS OUTPUT_STRIP_TRAILING_WHITESPACE)
 message(STATUS "MYSQL_LIBS = ${MYSQL_LIBS}")
 if (MYSQL_LIBS STREQUAL "")
-  set(MYSQL_LIBS "-mariadb")
+  set(MYSQL_LIBS "-lmariadb")
   message(STATUS "MYSQL_LIBS = ${MYSQL_LIBS} (set to default)")
-endif
+endif()
 
 
 target_link_libraries(arpwatch PRIVATE pcap net pthread config  ${MYSQL_LIBS})
