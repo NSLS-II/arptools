@@ -121,10 +121,14 @@ add_custom_target(version_info DEPENDS ${CMAKE_BINARY_DIR}/version.c)
 
 find_library(PCAP_LIBRARY pcap REQUIRED)
 find_library(NET_LIBRARY net REQUIRED)
-find_library(MARIADB_LIBRARY mariadb REQUIRED)
 find_library(CONFIG_LIBRARY config REQUIRED)
 
-target_link_libraries(arpwatch PRIVATE pcap net pthread config mariadb)
+execute_process(COMMAND mysql_config --libs
+    OUTPUT_VARIABLE MYSQL_LIBS OUTPUT_STRIP_TRAILING_WHITESPACE)
+message(STATUS "MYSQL_LIBS = ${MYSQL_LIBS}")
+
+
+target_link_libraries(arpwatch PRIVATE pcap net pthread config  ${MYSQL_LIBS})
 
 # Install
 
