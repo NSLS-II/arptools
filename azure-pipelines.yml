@@ -31,13 +31,13 @@ stages:
           rpmrelease: centos7
           cmake: cmake3
         debian10_amd64:
-          containerImage: stuwilkins/arptools-build-deb10:latest
+          containerImage: stuwilkins/arptools-build-deb10-amd64:latest
           debrelease: debian10
           pkg_type: debian
           cmake: cmake
           arch: amd64
         debian10_armhf:
-          containerImage: stuwilkins/arptools-build-deb10:latest
+          containerImage: stuwilkins/arptools-build-deb10-armhf:latest
           debrelease: debian10
           pkg_type: debian
           cmake: cmake
