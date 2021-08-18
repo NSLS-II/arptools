@@ -71,6 +71,7 @@ stages:
         old_debfile=$(ls -1 ../arptools_*.deb | tail -1)
         new_debfile=$(echo ${old_debfile} | sed "s/\.deb/-$(debrelease).deb/")
         mv "${old_debfile}" "${new_debfile}"
+        cp "${new_debfile}" .
         echo "##vso[task.setvariable variable=releasefile]${new_debfile}"
         echo "##[debug] old_debfile = ${old_debfile}"
         echo "##[debug] new_debfile = ${new_debfile}"
