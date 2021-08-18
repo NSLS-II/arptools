@@ -124,8 +124,12 @@ find_library(NET_LIBRARY net REQUIRED)
 find_library(CONFIG_LIBRARY config REQUIRED)
 
 execute_process(COMMAND mysql_config --libs
-    OUTPUT_VARIABLE MYSQL_LIBS OUTPUT_STRIP_TRAILING_WHITESPACE)
+  OUTPUT_VARIABLE MYSQL_LIBS OUTPUT_STRIP_TRAILING_WHITESPACE)
 message(STATUS "MYSQL_LIBS = ${MYSQL_LIBS}")
+if (MYSQL_LIBS STREQUAL "")
+  set(MYSQL_LIBS "-mariadb")
+  message(STATUS "MYSQL_LIBS = ${MYSQL_LIBS} (set to default)")
+endif
 
 
 target_link_libraries(arpwatch PRIVATE pcap net pthread config  ${MYSQL_LIBS})
