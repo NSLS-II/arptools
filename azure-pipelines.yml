@@ -67,7 +67,6 @@ stages:
 
     - script: |
         set -e
-        mkdir -p build
         dpkg-buildpackage -a $(arch) -b
         old_debfile=$(ls -1 ../arptools_*.deb | tail -1)
         new_debfile=$(echo ${old_debfile} | sed "s/\.deb/-$(debrelease).deb/")
@@ -82,7 +81,7 @@ stages:
     - task: CopyFiles@2
       inputs:
         targetFolder: '$(Build.ArtifactStagingDirectory)'
-        contents: '../arptools_*.deb'
+        contents: 'arptools_*.deb'
         flattenFolders: true
       condition: and(succeeded(), eq(variables.pkg_type, 'debian'))
 
