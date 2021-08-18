@@ -52,13 +52,9 @@ stages:
         mkdir build
         cd build
         $(cmake) ..
-      displayName: Run CMAKE
-
-    - script: |
-        set -e
-        cd build
         VERBOSE=1 make
       displayName: Build
+      condition: neq(variables.arch, 'armhf'))
 
     - script: |
         GITDESC=$(git describe --abbrev=0)
