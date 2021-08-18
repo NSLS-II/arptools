@@ -82,7 +82,7 @@ stages:
     - task: CopyFiles@2
       inputs:
         targetFolder: '$(Build.ArtifactStagingDirectory)'
-        contents: 'build/arptools_*.deb'
+        contents: '../arptools_*.deb'
         flattenFolders: true
       condition: and(succeeded(), eq(variables.pkg_type, 'debian'))
 
