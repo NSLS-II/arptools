@@ -2,7 +2,8 @@
 FROM debian:10
 RUN dpkg --add-architecture armhf
 RUN apt-get update && apt-get -y upgrade
-RUN apt-get -y install build-essential crossbuild-essential-armhf
-RUN apt-get -y install libmariadb-dev-compat libpcap0.8-dev libnet1-dev libconfig-dev libsystemd-dev cmake
+RUN apt-get -y install build-essential crossbuild-essential-armhf cmake
+RUN apt-get -y install libmariadb-dev-compat libpcap0.8-dev libnet1-dev libconfig-dev libsystemd-dev
+RUN apt-get -y install libmariadb-dev-compat:armhf libpcap0.8-dev:armhf libnet1-dev:armhf libconfig-dev:armhf libsystemd-dev:armhf
 RUN apt-get -y install git-buildpackage python3-pip systemd
 RUN pip3 install cpplint
