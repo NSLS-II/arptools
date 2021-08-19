@@ -217,6 +217,8 @@ int read_instance_config(arpwatch_params *params, int instance_num) {
     params->filter_self = 0;
   }
 
+  params->vlan = 170;
+
   rtn = 0;
 
 _error:

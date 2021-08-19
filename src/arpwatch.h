@@ -75,6 +75,7 @@ typedef struct {
   uint32_t ipaddress;
   uint32_t subnet;
   unsigned char hwaddress[ETH_ALEN];
+  int vlan;
 } arpwatch_params;
 
 

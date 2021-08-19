@@ -45,7 +45,8 @@
 uint8_t hw_bcast[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 int arp_send(const char* device, uint32_t ip_probe,
-             uint32_t subnet, useconds_t sleep_usec) {
+             uint32_t subnet, useconds_t sleep_usec,
+             int vlan) {
   uint32_t ip_addr;
   struct libnet_ether_addr* hw_addr = NULL;
   libnet_t *l;
@@ -111,11 +112,27 @@ int arp_send(const char* device, uint32_t ip_probe,
     }
 
     if (ethert == 0) {
-      if ((ethert = libnet_build_ethernet(hw_bcast, (uint8_t*)hw_addr,
-                                          ETHERTYPE_ARP, NULL, 0, l,
-                                          ethert)) == -1) {
-        ERROR_PRINT("Can't build ethernet header: %s\n", libnet_geterror(l));
-        goto _error;
+      if (vlan) {
+        if ((ethert = libnet_build_802_1q(hw_bcast, (uint8_t*)hw_addr,
+                                          ETHERTYPE_VLAN,    /* TPI */
+                                          0x006,             /* priority (0 - 7) */
+                                          0x001,             /* CFI flag */
+                                          vlan,              /* vid (0 - 4095) */
+                                          0x0806,            /* ARP */
+                                          NULL,              /* payload */
+                                          0,                 /* payload size */
+                                          l,                 /* libnet handle */
+                                          0)) == -1) {              /* libnet id */
+          ERROR_PRINT("Can't build 802.1q header: %s\n", libnet_geterror(l));
+          goto _error;
+        }
+      } else {
+        if ((ethert = libnet_build_ethernet(hw_bcast, (uint8_t*)hw_addr,
+                                            ETHERTYPE_ARP, NULL, 0, l,
+                                            ethert)) == -1) {
+          ERROR_PRINT("Can't build ethernet header: %s\n", libnet_geterror(l));
+          goto _error;
+        }
       }
     }
 
@@ -144,7 +161,8 @@ void* arp_thread(void *ctx) {
     arp_send(params->iface,
             params->ipaddress,
             params->subnet,
-            params->arp_delay);
+            params->arp_delay,
+            params->vlan);
 
     DEBUG_PRINT("Waiting for %ds\n", params->arp_loop_delay);
     sleep(params->arp_loop_delay);
