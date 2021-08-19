@@ -25,11 +25,6 @@ stages:
           pkg_type: redhat
           rpmrelease: centos8
           cmake: cmake
-#        centos7:
-#          containerImage: stuwilkins/arptools-build-centos7:latest
-#          pkg_type: redhat
-#          rpmrelease: centos7
-#          cmake: cmake3
         debian10_amd64:
           containerImage: stuwilkins/arptools-build-deb10-amd64:latest
           debrelease: debian10
