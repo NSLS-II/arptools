@@ -46,7 +46,7 @@ uint8_t hw_bcast[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 int arp_send(const char* device, uint32_t ip_probe,
              uint32_t subnet, useconds_t sleep_usec,
-             int vlan) {
+             int vlan, uint32_t src_ipaddress) {
   uint32_t ip_addr;
   struct libnet_ether_addr* hw_addr = NULL;
   libnet_t *l;
@@ -62,10 +62,15 @@ int arp_send(const char* device, uint32_t ip_probe,
     return -1;
   }
 
-  ip_addr = libnet_get_ipaddr4(l);
   if ((hw_addr = libnet_get_hwaddr(l)) == NULL) {
     DEBUG_COMMENT("Unable to read HW address.\n");
     goto _error;
+  }
+
+  if (!src_ipaddress) {
+    ip_addr = libnet_get_ipaddr4(l);
+  } else {
+    ip_addr = src_ipaddress;
   }
 
   uint8_t *_ip_addr = (uint8_t *)(&ip_addr);
@@ -115,14 +120,14 @@ int arp_send(const char* device, uint32_t ip_probe,
       if (vlan) {
         if ((ethert = libnet_build_802_1q(hw_bcast, (uint8_t*)hw_addr,
                                           ETHERTYPE_VLAN,    /* TPI */
-                                          0x006,             /* priority (0 - 7) */
-                                          0x001,             /* CFI flag */
-                                          vlan,              /* vid (0 - 4095) */
-                                          0x0806,            /* ARP */
-                                          NULL,              /* payload */
-                                          0,                 /* payload size */
-                                          l,                 /* libnet handle */
-                                          0)) == -1) {              /* libnet id */
+                                          0x006, /* priority (0 - 7) */
+                                          0x001, /* CFI flag */
+                                          vlan,  /* vid (0 - 4095) */
+                                          0x0806,/* ARP */
+                                          NULL,  /* payload */
+                                          0,     /* payload size */
+                                          l,     /* libnet handle */
+                                          0)) == -1) {
           ERROR_PRINT("Can't build 802.1q header: %s\n", libnet_geterror(l));
           goto _error;
         }
@@ -158,11 +163,14 @@ void* arp_thread(void *ctx) {
   arpwatch_params *params = (arpwatch_params*)ctx;
 
   for (;;) {
-    arp_send(params->iface,
-            params->ipaddress,
-            params->subnet,
-            params->arp_delay,
-            params->vlan);
+    for (int i = 0; i < params->num_network; i++) {
+      arp_send(params->iface,
+               params->network[i].ipaddress,
+               params->network[i].subnet,
+               params->arp_delay,
+               params->network[i].vlan,
+               params->network[i].src_ipaddress);
+    }
 
     DEBUG_PRINT("Waiting for %ds\n", params->arp_loop_delay);
     sleep(params->arp_loop_delay);

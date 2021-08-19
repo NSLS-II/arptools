@@ -41,7 +41,5 @@
 #include "arpwatch.h"
 
 int arp_setup(arpwatch_params *params);
-int arp_send(const char* device, uint32_t ip_probe,
-             uint32_t subnet, useconds_t sleep_usec);
 
 #endif  // SRC_ARP_H_

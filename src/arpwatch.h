@@ -54,7 +54,15 @@
 #define NO_VLAN_TAG                      0x0000
 
 typedef struct {
+  uint32_t ipaddress;
+  uint32_t src_ipaddress;
+  uint32_t subnet;
+  int vlan;
+} arpwatch_network;
+
+typedef struct {
   int num_instance;
+  int num_network;
   int mysql_loop_delay;
   int arp_delay;
   int arp_loop_delay;
@@ -72,10 +80,8 @@ typedef struct {
   char database[ARPWATCH_CONFIG_MAX_STRING];
   char location[ARPWATCH_CONFIG_MAX_STRING];
   char label[ARPWATCH_CONFIG_MAX_STRING];
-  uint32_t ipaddress;
-  uint32_t subnet;
   unsigned char hwaddress[ETH_ALEN];
-  int vlan;
+  arpwatch_network *network;
 } arpwatch_params;
 
 

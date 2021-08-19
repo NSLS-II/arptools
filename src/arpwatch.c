@@ -168,30 +168,6 @@ int read_instance_config(arpwatch_params *params, int instance_num) {
     goto _error;
   }
 
-  if (config_setting_lookup_string(instance, "ipaddress", &str)) {
-    struct in_addr addr;
-    if (!inet_aton(str, &addr)) {
-      ERROR_COMMENT("Invalid ip address specified\n");
-      goto _error;
-    }
-    params->ipaddress = addr.s_addr;
-  } else {
-    ERROR_COMMENT("No ipaddress defined in config file\n");
-    goto _error;
-  }
-
-  if (config_setting_lookup_string(instance, "subnet", &str)) {
-    struct in_addr addr;
-    if (!inet_aton(str, &addr)) {
-      ERROR_COMMENT("Invalid subnet mask specified\n");
-      goto _error;
-    }
-    params->subnet = addr.s_addr;
-  } else {
-    ERROR_COMMENT("No subnet defined in config file\n");
-    goto _error;
-  }
-
   if (!config_setting_lookup_bool(instance, "ignore_tagged",
                                   &params->ignore_tagged)) {
     params->ignore_tagged = 0;
@@ -217,7 +193,67 @@ int read_instance_config(arpwatch_params *params, int instance_num) {
     params->filter_self = 0;
   }
 
-  params->vlan = 170;
+  config_setting_t *s = config_setting_lookup(instance, "networks");
+  if (s== NULL) {
+    ERROR_COMMENT("No networks in config file.\n");
+    goto _error;
+  }
+
+  params->num_network = config_setting_length(s);  // Number of instances
+  DEBUG_PRINT("Configuring %d networks\n", params->num_network);
+
+  params->network = (arpwatch_network*)
+    malloc(sizeof(arpwatch_network) * params->num_network);
+
+  if (!params->network) {
+    ERROR_COMMENT("Unable to allocate memory for networks\n");
+    goto _error;
+  }
+
+  for (int i = 0; i < params->num_network; i++) {
+    config_setting_t *net = config_setting_get_elem(s, i);
+
+    if (config_setting_lookup_string(net, "ipaddress", &str)) {
+      struct in_addr addr;
+      if (!inet_aton(str, &addr)) {
+        ERROR_COMMENT("Invalid ip address specified\n");
+        goto _error;
+      }
+      params->network[i].ipaddress = addr.s_addr;
+    } else {
+      ERROR_COMMENT("No ipaddress defined in config file\n");
+      goto _error;
+    }
+
+    if (config_setting_lookup_string(net, "subnet", &str)) {
+      struct in_addr addr;
+      if (!inet_aton(str, &addr)) {
+        ERROR_COMMENT("Invalid subnet mask specified\n");
+        goto _error;
+      }
+      params->network[i].subnet = addr.s_addr;
+    } else {
+      ERROR_COMMENT("No subnet defined in config file\n");
+      goto _error;
+    }
+
+    if (!config_setting_lookup_int(net, "vlan",
+                                  &params->network[i].vlan)) {
+      ERROR_COMMENT("No vlan defined in config file\n");
+      goto _error;
+    }
+
+    if (config_setting_lookup_string(net, "src_ipaddress", &str)) {
+      struct in_addr addr;
+      if (!inet_aton(str, &addr)) {
+        ERROR_COMMENT("Invalid subnet mask specified\n");
+        goto _error;
+      }
+      params->network[i].src_ipaddress = addr.s_addr;
+    } else {
+      params->network[i].src_ipaddress = 0;
+    }
+  }
 
   rtn = 0;
 
