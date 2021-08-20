@@ -44,11 +44,22 @@ stages:
     steps:
     - script: |
         set -e
+        rm -rf build
         mkdir build
         cd build
-        $(cmake) ..
+        $(cmake) .. -DDEBUG=NO
         VERBOSE=1 make
       displayName: Build
+      condition: ne(variables.arch, 'armhf')
+
+    - script: |
+        set -e
+        rm -rf build
+        mkdir build
+        cd build
+        $(cmake) .. -DDEBUG=YES
+        VERBOSE=1 make
+      displayName: Build (DEBUG Version)
       condition: ne(variables.arch, 'armhf')
 
     - script: |
