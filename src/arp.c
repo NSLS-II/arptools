@@ -46,7 +46,8 @@ uint8_t hw_bcast[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 int arp_send(const char* device, uint32_t ip_probe,
              uint32_t subnet, useconds_t sleep_usec,
-             int vlan, uint32_t src_ipaddress) {
+             int vlan_pri, int vlan_dei, int vlan,
+             uint32_t src_ipaddress) {
   uint32_t ip_addr;
   struct libnet_ether_addr* hw_addr = NULL;
   libnet_t *l;
@@ -58,12 +59,12 @@ int arp_send(const char* device, uint32_t ip_probe,
   int rtn = -1;
 
   if ((l = libnet_init(LIBNET_LINK_ADV, device, errbuf)) == NULL) {
-    DEBUG_COMMENT("Unable to initialize libnet\n");
+    ERROR_COMMENT("Unable to initialize libnet\n");
     return -1;
   }
 
   if ((hw_addr = libnet_get_hwaddr(l)) == NULL) {
-    DEBUG_COMMENT("Unable to read HW address.\n");
+    ERROR_COMMENT("Unable to read HW address.\n");
     goto _error;
   }
 
@@ -118,16 +119,15 @@ int arp_send(const char* device, uint32_t ip_probe,
 
     if (ethert == 0) {
       if (vlan) {
+        if (vlan) {
+          DEBUG_PRINT("VLAN : %d PRI : %d DEI : %d\n",
+            vlan, vlan_pri, vlan_dei);
+        }
         if ((ethert = libnet_build_802_1q(hw_bcast, (uint8_t*)hw_addr,
                                           ETHERTYPE_VLAN,    /* TPI */
-                                          0x006, /* priority (0 - 7) */
-                                          0x001, /* CFI flag */
-                                          vlan,  /* vid (0 - 4095) */
-                                          0x0806,/* ARP */
-                                          NULL,  /* payload */
-                                          0,     /* payload size */
-                                          l,     /* libnet handle */
-                                          0)) == -1) {
+                                          vlan_pri, vlan_dei, vlan,
+                                          ETHERTYPE_ARP, NULL, 0, l,
+                                          ethert)) == -1) {
           ERROR_PRINT("Can't build 802.1q header: %s\n", libnet_geterror(l));
           goto _error;
         }
@@ -168,6 +168,8 @@ void* arp_thread(void *ctx) {
                params->network[i].ipaddress,
                params->network[i].subnet,
                params->arp_delay,
+               params->network[i].vlan_pri,
+               params->network[i].vlan_dei,
                params->network[i].vlan,
                params->network[i].src_ipaddress);
     }
