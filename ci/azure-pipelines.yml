@@ -14,6 +14,11 @@ stages:
 - stage: Build
 
   jobs:
+  - job: Review
+    steps:
+    - task: WhiteSource Bolt@19
+      displayName: 'WhiteSource Bolt'
+
   - job: Build
     pool:
       vmImage: 'ubuntu-latest'
