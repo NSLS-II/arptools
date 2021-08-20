@@ -70,6 +70,12 @@ int buffer_init(buffer_data *buffer, int size, int ring) {
   return BUFFER_NOERR;
 }
 
+void buffer_free(buffer_data *buffer) {
+  if (buffer->data) {
+    free(buffer->data);
+  }
+}
+
 void buffer_flush(buffer_data *buffer) {
   pthread_mutex_lock(&buffer->mutex);
   buffer->tail = buffer->head;

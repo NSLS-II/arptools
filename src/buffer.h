@@ -134,6 +134,7 @@ int buffer_init(buffer_data *buffer, int size, int ring);
  * Initialize the buffer. The BUFFER is of length size with a data
  * structure of length elem_size.
  */
+void buffer_free(buffer_data *buffer);
 int buffer_used_bytes(buffer_data *buffer);
 double buffer_percent_full(buffer_data *buffer);
 int buffer_used_elements(buffer_data *buffer);
