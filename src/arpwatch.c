@@ -322,6 +322,11 @@ int main(int argc, char *argv[]) {
       }
       capture_start(&params);
 
+      // Ok if we get here, cleanup memory
+
+      buffer_free(&(params.data_buffer));
+      free(params.network);
+
       exit(EXIT_SUCCESS);
     }
   }
