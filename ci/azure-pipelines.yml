@@ -16,7 +16,7 @@ stages:
   jobs:
   - job: Review
     steps:
-    - task: WhiteSource Bolt@19
+    - task: WhiteSource Bolt@20
       displayName: 'WhiteSource Bolt'
 
   - job: Build
