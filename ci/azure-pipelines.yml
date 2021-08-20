@@ -16,8 +16,11 @@ stages:
   jobs:
   - job: Review
     steps:
-    - task: WhiteSource Bolt@20
+    - task: WhiteSource Bolt@21
       displayName: 'WhiteSource Bolt'
+      inputs:
+        cwd: '$(System.DefaultWorkingDirectory)'
+        projectName: 'arptools'
 
   - job: Build
     pool:
