@@ -243,6 +243,16 @@ int read_instance_config(arpwatch_params *params, int instance_num) {
       goto _error;
     }
 
+    if (!config_setting_lookup_int(net, "vlan_pri",
+                                  &params->network[i].vlan_pri)) {
+      params->network[i].vlan_pri = 0;
+    }
+
+    if (!config_setting_lookup_int(net, "vlan_dei",
+                                  &params->network[i].vlan_dei)) {
+      params->network[i].vlan_dei = 0;
+    }
+
     if (config_setting_lookup_string(net, "src_ipaddress", &str)) {
       struct in_addr addr;
       if (!inet_aton(str, &addr)) {

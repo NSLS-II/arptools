@@ -58,6 +58,8 @@ typedef struct {
   uint32_t src_ipaddress;
   uint32_t subnet;
   int vlan;
+  int vlan_pri;
+  int vlan_dei;
 } arpwatch_network;
 
 typedef struct {
