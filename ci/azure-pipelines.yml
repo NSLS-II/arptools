@@ -90,14 +90,14 @@ stages:
         targetFolder: '$(Build.ArtifactStagingDirectory)'
         contents: 'arptools_*.deb'
         flattenFolders: true
-      condition: and(succeeded(), eq(variables.pkg_type, 'debian'))
+      condition: and(succeeded(), eq(variables.pkg_type, 'debian'), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
 
     - task: PublishBuildArtifacts@1
       inputs:
         pathToPublish: '$(Build.ArtifactStagingDirectory)'
         artifactName: packages
       displayName: Publish Debian Packages
-      condition: and(succeeded(), eq(variables.pkg_type, 'debian'))
+      condition: and(succeeded(), eq(variables.pkg_type, 'debian'), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
 
     - script: |
         set -e
@@ -118,14 +118,14 @@ stages:
         targetFolder: '$(Build.ArtifactStagingDirectory)'
         contents: rpmbuild/RPMS/x86_64/*
         flattenFolders: true
-      condition: and(succeeded(), eq(variables.pkg_type, 'redhat'))
+      condition: and(succeeded(), eq(variables.pkg_type, 'redhat'), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
 
     - task: PublishBuildArtifacts@1
       inputs:
         pathToPublish: '$(Build.ArtifactStagingDirectory)'
         artifactName: packages
       displayName: Publish RedHat Packages
-      condition: and(succeeded(), eq(variables.pkg_type, 'redhat'))
+      condition: and(succeeded(), eq(variables.pkg_type, 'redhat'), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
 
   - job: Publish
     dependsOn: Build
