@@ -83,17 +83,17 @@ int read_global_config(arpwatch_params *params) {
     goto _error;
   }
 
-  if (config_lookup_string(&cfg, "database", &str)) {
-    strncpy(params->database, str, ARPWATCH_CONFIG_MAX_STRING);
-  } else {
-    ERROR_COMMENT("No database defined in config file\n");
-    goto _error;
-  }
-
   if (config_lookup_string(&cfg, "password", &str)) {
     strncpy(params->password, str, ARPWATCH_CONFIG_MAX_STRING);
   } else {
     ERROR_COMMENT("No password defined in config file\n");
+    goto _error;
+  }
+
+  if (config_lookup_string(&cfg, "database", &str)) {
+    strncpy(params->database, str, ARPWATCH_CONFIG_MAX_STRING);
+  } else {
+    ERROR_COMMENT("No database defined in config file\n");
     goto _error;
   }
 
@@ -116,13 +116,14 @@ int read_global_config(arpwatch_params *params) {
     params->buffer_size = ARPWATCH_BUFFER_SIZE;
   }
 
-  config_setting_t *setting = config_lookup(&cfg, "instances");
+  config_setting_t *setting = config_lookup(&cfg, "interfaces");
   if (setting == NULL) {
-    ERROR_COMMENT("No instances in config file.\n");
+    ERROR_COMMENT("No interfaces in config file.\n");
     goto _error;
   }
 
-  params->num_instance = config_setting_length(setting);  // Number of instances
+  // Number of interfaces
+  params->num_interface = config_setting_length(setting);
 
   rtn = 0;
 
@@ -133,7 +134,7 @@ _error:
   return rtn;
 }
 
-int read_instance_config(arpwatch_params *params, int instance_num) {
+int read_interface_config(arpwatch_params *params, int interface_num) {
   config_t cfg;
   const char *str;
   int rtn = -1;
@@ -146,60 +147,65 @@ int read_instance_config(arpwatch_params *params, int instance_num) {
     goto _error;
   }
 
-  config_setting_t *setting = config_lookup(&cfg, "instances");
+  config_setting_t *setting = config_lookup(&cfg, "interfaces");
   if (setting == NULL) {
-    ERROR_COMMENT("No instances in config file.\n");
+    ERROR_COMMENT("No interfaces in config file.\n");
     goto _error;
   }
-  config_setting_t *instance = config_setting_get_elem(setting, instance_num);
-  DEBUG_PRINT("Instance number = %d\n", instance_num);
+  config_setting_t *interface = config_setting_get_elem(setting, interface_num);
+  DEBUG_PRINT("Instance number = %d\n", interface_num);
 
-  if (config_setting_lookup_string(instance, "interface", &str)) {
-    strncpy(params->iface, str, ARPWATCH_CONFIG_MAX_STRING);
+  if (config_setting_lookup_string(interface, "device", &str)) {
+    strncpy(params->device, str, ARPWATCH_CONFIG_MAX_STRING);
   } else {
-    ERROR_COMMENT("No interface defined in config file\n");
+    ERROR_COMMENT("No device defined in config file\n");
     goto _error;
   }
 
-  if (config_setting_lookup_string(instance, "label", &str)) {
+  if (config_setting_lookup_string(interface, "label", &str)) {
     strncpy(params->label, str, ARPWATCH_CONFIG_MAX_STRING);
   } else {
     ERROR_COMMENT("No label defined in config file\n");
     goto _error;
   }
 
-  if (!config_setting_lookup_bool(instance, "ignore_tagged",
+  if (!config_setting_lookup_bool(interface, "ignore_tagged",
                                   &params->ignore_tagged)) {
     params->ignore_tagged = 0;
   }
 
-  if (!config_setting_lookup_bool(instance, "arp_requests",
+  if (!config_setting_lookup_bool(interface, "arp_requests",
                                   &params->arp_requests)) {
     params->arp_requests = 1;
   }
 
-  if (!config_setting_lookup_int(instance, "arp_loop_delay",
+  if (!config_setting_lookup_int(interface, "arp_loop_delay",
                                  &params->arp_loop_delay)) {
     params->arp_loop_delay = ARPWATCH_ARP_LOOP_DELAY;
   }
 
-  if (!config_setting_lookup_int(instance, "arp_delay",
+  if (!config_setting_lookup_int(interface, "arp_delay",
                                  &params->arp_delay)) {
     params->arp_delay = ARPWATCH_ARP_DELAY;
   }
 
-  if (!config_setting_lookup_bool(instance, "filter_self",
-                                  &params->filter_self)) {
-    params->filter_self = 0;
+  if (!config_setting_lookup_int(interface, "native_vlan",
+                                 &params->native_vlan)) {
+    ERROR_COMMENT("No native vlan in config file.\n");
+    goto _error;
   }
 
-  config_setting_t *s = config_setting_lookup(instance, "networks");
+  //
+  // Now process networks per interface
+  //
+
+  config_setting_t *s = config_setting_lookup(interface, "networks");
   if (s== NULL) {
     ERROR_COMMENT("No networks in config file.\n");
     goto _error;
   }
 
-  params->num_network = config_setting_length(s);  // Number of instances
+  params->num_network = config_setting_length(s);  // Number of interfaces
   DEBUG_PRINT("Configuring %d networks\n", params->num_network);
 
   params->network = (arpwatch_network*)
@@ -209,6 +215,10 @@ int read_instance_config(arpwatch_params *params, int instance_num) {
     ERROR_COMMENT("Unable to allocate memory for networks\n");
     goto _error;
   }
+
+  //
+  // Loop over all networks
+  //
 
   for (int i = 0; i < params->num_network; i++) {
     config_setting_t *net = config_setting_get_elem(s, i);
@@ -238,30 +248,30 @@ int read_instance_config(arpwatch_params *params, int instance_num) {
     }
 
     if (!config_setting_lookup_int(net, "vlan",
-                                  &params->network[i].vlan)) {
+                                   &params->network[i].vlan)) {
       ERROR_COMMENT("No vlan defined in config file\n");
       goto _error;
     }
 
     if (!config_setting_lookup_int(net, "vlan_pri",
-                                  &params->network[i].vlan_pri)) {
+                                   &params->network[i].vlan_pri)) {
       params->network[i].vlan_pri = 0;
     }
 
     if (!config_setting_lookup_int(net, "vlan_dei",
-                                  &params->network[i].vlan_dei)) {
+                                   &params->network[i].vlan_dei)) {
       params->network[i].vlan_dei = 0;
     }
 
-    if (config_setting_lookup_string(net, "src_ipaddress", &str)) {
+    if (config_setting_lookup_string(net, "ipaddress_source", &str)) {
       struct in_addr addr;
       if (!inet_aton(str, &addr)) {
         ERROR_COMMENT("Invalid subnet mask specified\n");
         goto _error;
       }
-      params->network[i].src_ipaddress = addr.s_addr;
+      params->network[i].ipaddress_source = addr.s_addr;
     } else {
-      params->network[i].src_ipaddress = 0;
+      params->network[i].ipaddress_source = 0;
     }
   }
 
@@ -269,8 +279,8 @@ int read_instance_config(arpwatch_params *params, int instance_num) {
 
 _error:
   config_destroy(&cfg);
-  NOTICE_PRINT("Read instance %d from config file %s\n",
-             instance_num, ARPWATCH_CONFIG_FILE);
+  NOTICE_PRINT("Read interface %d from config file %s\n",
+             interface_num, ARPWATCH_CONFIG_FILE);
   return rtn;
 }
 
@@ -295,7 +305,7 @@ int main(int argc, char *argv[]) {
   }
 
   int pid;
-  for (int i = 0; i < params.num_instance; i++) {
+  for (int i = 0; i < params.num_interface; i++) {
     pid = fork();
     if (pid < 0) {
       ERROR_COMMENT("Error in fork()\n");
@@ -303,7 +313,7 @@ int main(int argc, char *argv[]) {
     } else if (pid == 0) {
       DEBUG_PRINT("Child (%d): %d from %d\n", i, getpid(), getppid());
 
-      if (read_instance_config(&params, i)) {
+      if (read_interface_config(&params, i)) {
         ERROR_COMMENT("Error reading config file\n");
         exit(EXIT_FAILURE);
       }

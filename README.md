@@ -12,7 +12,7 @@
 ### RedHat
 
 ```bash
-yum install libpcap-devel libnet-devel libconfig-devel mariadb-connector-c-devel libsystemd-devel cmake
+yum install libpcap-devel libnet-devel libconfig-devel mariadb-connector-c-devel systemd-devel cmake
 mkdir build && cd build
 cmake ..
 make
@@ -44,17 +44,30 @@ password = "password";
 hostname = "localhost";
 location = "eddie";
 
-instances = (
+interfaces = (
   {
     interface = "enp6s0";
-    ipaddress = "192.168.1.1";
-    subnet = "255.255.255.0";
     label = "subnet1";
+    native_vlan = 100;
+    networks = (
+      {
+        ipaddress = "192.168.1.1";
+        subnet = "255.255.255.0";
+        vlan = 101;
+        src_ipaddress = "192.168.2.254";
+      }
+    )
   }, {
     interface = "enp4s0";
-    ipaddress = "10.10.0.0";
-    subnet = "255.255.255.0";
     label = "subnet2";
+    networks = (
+      {
+        ipaddress = "10.10.0.0";
+        subnet = "255.255.255.0";
+        vlan = 0;
+        src_ipaddress = "10.10.0.254";
+      }
+    )
   }
 );
 ```
@@ -73,15 +86,25 @@ instances = (
 | filter_self      | bool         | If true, do not record MAC address of the interface used to monitor traffic |
 | buffer_size      | int          | Size of internal ringbuffer for packet store                                |
 
-### Instance config options
+### Interfaces Config Options
 
-| Option         | Type   | Description                                                     |
-|----------------|--------|-----------------------------------------------------------------|
-| interface      | string | Device name for the interface to listen on                      |
-| label          | string | Label for this interface                                        |
-| ipaddress      | string | IP Address for interface to use for sending ARP requests        |
-| subnet         | string | Subnet mask for ip addresses to use for sending ARP requests    |
-| ignore_tagged  | bool   | If true, ignore tagged packets on this interface                |
-| arp_requests   | int    | If true, send arp requests to the ipaddress range               |
-| arp_loop_delay | int    | Time in seconds to sleep between sending ARP requests           |
-| arp_delay      | int    | Time in microseconds between ARP requestes from the same subnet |
+| Option         | Type   | Description                                                          |
+|----------------|--------|----------------------------------------------------------------------|
+| device         | string | Device name for the interface to listen on                           |
+| label          | string | Label for this interface                                             |
+| ignore_tagged  | bool   | If true, ignore tagged packets on this interface                     |
+| native_vlan    | int    | The native VLAN tag for this interface to use when no tag is present |
+| arp_requests   | int    | If true, send arp requests to the ipaddress range                    |
+| arp_loop_delay | int    | Time in seconds to sleep between sending ARP requests                |
+| arp_delay      | int    | Time in microseconds between ARP requestes from the same subnet      |
+
+### Networks Config Options
+
+| ipaddress        | string | IP Address for interface to use for sending ARP requests     |
+|------------------|--------|--------------------------------------------------------------|
+| subnet           | string | Subnet mask for ip addresses to use for sending ARP requests |
+| vlan             | string | Subnet mask for ip addresses to use for sending ARP requests |
+| vlan_pri         | string | Subnet mask for ip addresses to use for sending ARP requests |
+| vlan_dei         | string | Subnet mask for ip addresses to use for sending ARP requests |
+| vlan_dei         | string | Subnet mask for ip addresses to use for sending ARP requests |
+| ipaddress_source | string | Subnet mask for ip addresses to use for sending ARP requests |

@@ -51,31 +51,29 @@
 #define ARPWATCH_MYSQL_LOOP_DELAY        120
 #define ARPWATCH_BUFFER_SIZE             1000000
 
-#define NO_VLAN_TAG                      0x0000
-
 typedef struct {
   uint32_t ipaddress;
-  uint32_t src_ipaddress;
   uint32_t subnet;
+  uint32_t ipaddress_source;
   int vlan;
   int vlan_pri;
   int vlan_dei;
 } arpwatch_network;
 
 typedef struct {
-  int num_instance;
+  int num_interface;
   int num_network;
   int mysql_loop_delay;
   int arp_delay;
   int arp_loop_delay;
   int pcap_timeout;
-  int filter_self;
   int buffer_size;
   buffer_data data_buffer;
   int ignore_tagged;
   int arp_requests;
+  int native_vlan;
   char program[ARPWATCH_CONFIG_MAX_STRING];
-  char iface[ARPWATCH_CONFIG_MAX_STRING];
+  char device[ARPWATCH_CONFIG_MAX_STRING];
   char hostname[ARPWATCH_CONFIG_MAX_STRING];
   char username[ARPWATCH_CONFIG_MAX_STRING];
   char password[ARPWATCH_CONFIG_MAX_STRING];

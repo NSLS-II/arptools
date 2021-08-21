@@ -80,10 +80,10 @@ int ether_header_size(const u_char *packet) {
   }
 }
 
-uint16_t ether_get_vlan(const u_char *packet) {
+uint16_t ether_get_vlan(arpwatch_params *params, const u_char *packet) {
   struct ethernet_header *hdr = (struct ethernet_header *)packet;
 
-  uint16_t vlan = NO_VLAN_TAG;
+  uint16_t vlan = params->native_vlan;
   if (ntohs(hdr->ether_type) == ETHERTYPE_8021Q) {
     struct ethernet_header_8021q *vlan_hdr =
       (struct ethernet_header_8021q *)packet;
@@ -124,7 +124,7 @@ int capture_ethernet_packet(arpwatch_params *params,
   struct in_addr zero;
   zero.s_addr = 0;
   d->ip_addr = zero;
-  d->vlan = ether_get_vlan(packet);
+  d->vlan = ether_get_vlan(params, packet);
 
   buffer_advance_head(data, 1);
 
@@ -160,7 +160,7 @@ int capture_arp_packet(arpwatch_params *params,
   struct arpbdy *bptr;
 
   if (!ether_arp_is_ipv4(aptr)) {
-    ERROR_PRINT("%s : Non IPV4 ARP Packet\n", params->iface);
+    ERROR_PRINT("%s : Non IPV4 ARP Packet\n", params->device);
 
     buffer_data *data = &params->data_buffer;
     arp_data *d = buffer_get_head(data);
@@ -168,7 +168,7 @@ int capture_arp_packet(arpwatch_params *params,
     memcpy(d->hw_addr, eptr->ether_shost, ETH_ALEN);
     d->ts = pkthdr->ts;
     *(d->dhcp_name) = '\0';
-    d->vlan = ether_get_vlan(packet);
+    d->vlan = ether_get_vlan(params, packet);
     buffer_advance_head(data, 1);
 
     return 0;
@@ -188,12 +188,6 @@ int capture_arp_packet(arpwatch_params *params,
                             ether_header_size(packet) +
                             sizeof(struct arphdr));
 
-  if (!memcmp(params->hwaddress, bptr->ar_sha, ETH_ALEN) &&
-    params->filter_self) {
-    DEBUG_COMMENT("Skipping packet ... MAC matches host\n");
-      return 0;
-  }
-
   //
   // Check for ARP Probes
   // ARP Probes have the source IP Address set to all zeros
@@ -202,7 +196,7 @@ int capture_arp_packet(arpwatch_params *params,
       !memcmp(bptr->ar_tha, mac_zeros, ETH_ALEN)) {
     // ARP Probe!
     DEBUG_PRINT("Iface : %s Packet time : %ld ARP PROBE :  %-20s %-16s\n",
-                params->iface,
+                params->device,
                 pkthdr->ts.tv_sec,
                 ether_ntoa((const struct ether_addr *)&bptr->ar_sha),
                 inet_ntoa(bptr->ar_sip));
@@ -213,7 +207,7 @@ int capture_arp_packet(arpwatch_params *params,
     memcpy(d->hw_addr, bptr->ar_sha, ETH_ALEN);
     d->ts = pkthdr->ts;
     *(d->dhcp_name) = '\0';
-    d->vlan = ether_get_vlan(packet);
+    d->vlan = ether_get_vlan(params, packet);
     buffer_advance_head(data, 1);
 
     return 0;
@@ -231,7 +225,7 @@ int capture_arp_packet(arpwatch_params *params,
        !memcmp(bptr->ar_tha, mac_zeros, ETH_ALEN) ||
        !memcmp(bptr->ar_sha, bptr->ar_tha, ETH_ALEN))) {
     DEBUG_PRINT("Iface : %s Packet time : %ld ARP GRAT :  %-20s %-16s\n",
-                params->iface,
+                params->device,
                 pkthdr->ts.tv_sec,
                 ether_ntoa((const struct ether_addr *)&bptr->ar_sha),
                 inet_ntoa(bptr->ar_sip));
@@ -242,7 +236,7 @@ int capture_arp_packet(arpwatch_params *params,
     memcpy(d->hw_addr, bptr->ar_sha, ETH_ALEN);
     d->ts = pkthdr->ts;
     *(d->dhcp_name) = '\0';
-    d->vlan = ether_get_vlan(packet);
+    d->vlan = ether_get_vlan(params, packet);
 
     buffer_advance_head(data, 1);
 
@@ -255,7 +249,7 @@ int capture_arp_packet(arpwatch_params *params,
   //
 
   DEBUG_PRINT("Iface : %s Packet time : %ld ARP Source:  %-20s %-16s\n",
-              params->iface,
+              params->device,
               pkthdr->ts.tv_sec,
               ether_ntoa((const struct ether_addr *)&bptr->ar_sha),
               inet_ntoa(bptr->ar_sip));
@@ -266,7 +260,7 @@ int capture_arp_packet(arpwatch_params *params,
   memcpy(d->hw_addr, bptr->ar_sha, ETH_ALEN);
   d->ts = pkthdr->ts;
   *(d->dhcp_name) = '\0';
-  d->vlan = ether_get_vlan(packet);
+  d->vlan = ether_get_vlan(params, packet);
 
   buffer_advance_head(data, 1);
 
@@ -278,7 +272,7 @@ int capture_arp_packet(arpwatch_params *params,
   if (htons(aptr->ar_op) == ARPOP_REPLY) {
     DEBUG_PRINT("Iface : %s Packet time : %ld "
                 "ARP Dest  :  %-20s %-16s\n",
-                params->iface,
+                params->device,
                 pkthdr->ts.tv_sec,
                 ether_ntoa((const struct ether_addr *)&bptr->ar_tha),
                 inet_ntoa(bptr->ar_tip));
@@ -289,7 +283,7 @@ int capture_arp_packet(arpwatch_params *params,
     memcpy(d->hw_addr, bptr->ar_tha, ETH_ALEN);
     d->ts = pkthdr->ts;
     *(d->dhcp_name) = '\0';
-    d->vlan = ether_get_vlan(packet);
+    d->vlan = ether_get_vlan(params, packet);
     buffer_advance_head(data, 1);
   }
 
@@ -461,7 +455,7 @@ int capture_ip_packet(arpwatch_params *params,
   // Process any IP Packets that are broadcast
 
   DEBUG_PRINT("Iface : %s Packet time : %ld Broadcast Source:  %-20s %-16s\n",
-              params->iface,
+              params->device,
               pkthdr->ts.tv_sec,
               ether_ntoa((const struct ether_addr *)&eptr->ether_shost),
               inet_ntoa(iptr->ip_sip));
@@ -476,7 +470,7 @@ int capture_ip_packet(arpwatch_params *params,
   d->ip_addr = iptr->ip_sip;
 
   // Set VLAN Tag
-  d->vlan = ether_get_vlan(packet);
+  d->vlan = ether_get_vlan(params, packet);
 
   // Process MAC Address
   memcpy(d->hw_addr, eptr->ether_shost, ETH_ALEN);
@@ -495,7 +489,7 @@ int capture_ip_packet(arpwatch_params *params,
 
     d->type = BUFFER_TYPE_UDP;
 
-    DEBUG_PRINT("Iface : %s %d UDP %d -> %d\n", params->iface,
+    DEBUG_PRINT("Iface : %s %d UDP %d -> %d\n", params->device,
                 sizeof(struct ipbdy),
                 htons(uptr->sport), htons(uptr->dport));
 
@@ -532,7 +526,7 @@ void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr,
         (struct ethernet_header_8021q *) packet;
     type = ntohs(_eptr->ether_type);
 #ifdef DEBUG
-    uint16_t vlan = ether_get_vlan(packet);
+    uint16_t vlan = ether_get_vlan(params, packet);
     DEBUG_PRINT("TAGGED Packet type = 0x%0X vlan = %d\n", type, vlan);
 #endif
   }
@@ -570,39 +564,39 @@ int capture_start(arpwatch_params *params) {
   int found = 0;
   for (temp=interfaces; temp; temp=temp->next) {
     DEBUG_PRINT("Found interface : %s\n", temp->name);
-    if (!strcmp(temp->name, params->iface)) {
+    if (!strcmp(temp->name, params->device)) {
       found = 1;
       break;
     }
   }
 
   if (!found) {
-    ERROR_PRINT("Interface %s is not valid.\n", params->iface);
+    ERROR_PRINT("Interface %s is not valid.\n", params->device);
     goto _error;
   }
 
   // Get the mac address of the interface
   struct ifreq ifr;
   int s = socket(AF_INET, SOCK_DGRAM, 0);
-  strncpy(ifr.ifr_name, params->iface, IFNAMSIZ);
+  strncpy(ifr.ifr_name, params->device, IFNAMSIZ);
   ioctl(s, SIOCGIFHWADDR, &ifr);
   memcpy(params->hwaddress, ifr.ifr_hwaddr.sa_data, ETH_ALEN);
   DEBUG_PRINT("MAC Address of %s : %s\n",
-              params->iface,
+              params->device,
               int_to_mac(params->hwaddress));
   close(s);
 
   // Get the IP address and netmask of the interface
-  pcap_lookupnet(params->iface, &netp, &maskp, errbuf);
+  pcap_lookupnet(params->device, &netp, &maskp, errbuf);
 
-  pcap_description = pcap_open_live(params->iface, BUFSIZ, 1,
+  pcap_description = pcap_open_live(params->device, BUFSIZ, 1,
                          params->pcap_timeout, errbuf);
   if (pcap_description == NULL) {
     ERROR_PRINT("pcap_open_live(): ERROR : %s\n", errbuf);
     goto _error;
   }
 
-  DEBUG_PRINT("Opened interface : %s\n", params->iface);
+  DEBUG_PRINT("Opened interface : %s\n", params->device);
 
   // Compile the pcap program
   if (pcap_compile(pcap_description, &fp, params->program, 0, netp) == -1) {
@@ -616,7 +610,7 @@ int capture_start(arpwatch_params *params) {
     goto _error;
   }
 
-  NOTICE_PRINT("Starting capture on : %s\n", params->iface);
+  NOTICE_PRINT("Starting capture on : %s\n", params->device);
   pcap_loop(pcap_description, -1, capture_callback,
             (u_char*)(params));
 

@@ -81,7 +81,6 @@ void * mysql_thread(void * arg) {
       char sql_buffer[100000];
       char time_buffer[256];
       char hostname[256];
-      char vlan[256];
 
       struct tm gm;
       if (localtime_r(&(arp->ts.tv_sec), &gm)) {
@@ -108,12 +107,6 @@ void * mysql_thread(void * arg) {
 
       DEBUG_PRINT("Hostname : %s\n", hostname);
 
-      if (arp->vlan == NO_VLAN_TAG) {
-        snprintf(vlan, sizeof(vlan), "NULL");
-      } else {
-        snprintf(vlan, sizeof(vlan), "%d", arp->vlan);
-      }
-
       const char *hw_addr = int_to_mac(arp->hw_addr);
       const char *ip_addr = inet_ntoa(arp->ip_addr);
 
@@ -125,7 +118,7 @@ void * mysql_thread(void * arg) {
                 "(hw_address, ip_address, location, "
                 "label, type, last_seen, hostname, vlan) "
                 "VALUES ('%s', '%s', '%s', '%s', "
-                "%d, '%s', '%s', %s) "
+                "%d, '%s', '%s', %d) "
                 "ON DUPLICATE KEY UPDATE "
                 "ip_address = '%s', "
                 "location = '%s', "
@@ -133,12 +126,12 @@ void * mysql_thread(void * arg) {
                 "type = type | %d, "
                 "last_seen = '%s', "
                 "hostname = '%s', "
-                "vlan = %s;",
+                "vlan = %d;",
                 hw_addr,
                 ip_addr, params->location, params->label,
-                arp->type, time_buffer, hostname, vlan,
+                arp->type, time_buffer, hostname, arp->vlan,
                 ip_addr, params->location, params->label,
-                arp->type, time_buffer, hostname, vlan);
+                arp->type, time_buffer, hostname, arp->vlan);
 
         DEBUG_PRINT("ARP/IP/UDP %d SQL query : %s\n", arp->type, sql_buffer);
 
@@ -150,19 +143,19 @@ void * mysql_thread(void * arg) {
                 "INSERT INTO arpdata "
                 "(hw_address, location, label, "
                 "last_seen, dhcp_name, type, vlan) "
-                "VALUES ('%s', '%s', '%s', '%s', '%s', %d, %s) "
+                "VALUES ('%s', '%s', '%s', '%s', '%s', %d, %d) "
                 "ON DUPLICATE KEY UPDATE "
                 "location = '%s', "
                 "label = '%s', "
                 "last_seen = '%s', "
                 "dhcp_name = '%s', "
                 "type = type | %d, "
-                "vlan = %s;",
+                "vlan = %d;",
                 hw_addr,
                 params->location, params->label, time_buffer,
-                arp->dhcp_name, arp->type, vlan,
+                arp->dhcp_name, arp->type, arp->vlan,
                 params->location, params->label, time_buffer,
-                arp->dhcp_name, arp->type, vlan);
+                arp->dhcp_name, arp->type, arp->vlan);
 
         DEBUG_PRINT("DHCP SQL query : %s\n", sql_buffer);
 
@@ -174,18 +167,18 @@ void * mysql_thread(void * arg) {
                 "INSERT INTO arpdata "
                 "(hw_address, location, label, "
                 "last_seen, type, vlan) "
-                "VALUES ('%s', '%s', '%s', '%s', %d, %s) "
+                "VALUES ('%s', '%s', '%s', '%s', %d, %d) "
                 "ON DUPLICATE KEY UPDATE "
                 "location = '%s', "
                 "label = '%s', "
                 "last_seen = '%s', "
                 "type = type | %d, "
-                "vlan = %s;",
+                "vlan = %d;",
                 hw_addr,
                 params->location, params->label, time_buffer,
-                arp->type, vlan,
+                arp->type, arp->vlan,
                 params->location, params->label, time_buffer,
-                arp->type, vlan);
+                arp->type, arp->vlan);
 
         DEBUG_PRINT("Unknown name SQL query : %s\n", sql_buffer);
 

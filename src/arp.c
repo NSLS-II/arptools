@@ -47,7 +47,7 @@ uint8_t hw_bcast[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 int arp_send(const char* device, uint32_t ip_probe,
              uint32_t subnet, useconds_t sleep_usec,
              int vlan_pri, int vlan_dei, int vlan,
-             uint32_t src_ipaddress) {
+             uint32_t ipaddress_source) {
   uint32_t ip_addr;
   struct libnet_ether_addr* hw_addr = NULL;
   libnet_t *l;
@@ -68,10 +68,10 @@ int arp_send(const char* device, uint32_t ip_probe,
     goto _error;
   }
 
-  if (!src_ipaddress) {
+  if (!ipaddress_source) {
     ip_addr = libnet_get_ipaddr4(l);
   } else {
-    ip_addr = src_ipaddress;
+    ip_addr = ipaddress_source;
   }
 
   uint8_t *_ip_addr = (uint8_t *)(&ip_addr);
@@ -164,14 +164,14 @@ void* arp_thread(void *ctx) {
 
   for (;;) {
     for (int i = 0; i < params->num_network; i++) {
-      arp_send(params->iface,
+      arp_send(params->device,
                params->network[i].ipaddress,
                params->network[i].subnet,
                params->arp_delay,
                params->network[i].vlan_pri,
                params->network[i].vlan_dei,
                params->network[i].vlan,
-               params->network[i].src_ipaddress);
+               params->network[i].ipaddress_source);
     }
 
     DEBUG_PRINT("Waiting for %ds\n", params->arp_loop_delay);
