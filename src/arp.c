@@ -44,43 +44,33 @@
 
 uint8_t hw_bcast[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
-int arp_send(const char* device, uint32_t ip_probe,
-             uint32_t subnet, useconds_t sleep_usec,
-             int vlan_pri, int vlan_dei, int vlan,
-             uint32_t ipaddress_source) {
-  uint32_t ip_addr;
+int arp_send(arpwatch_params *params) {
   struct libnet_ether_addr* hw_addr = NULL;
   libnet_t *l;
-  libnet_ptag_t arpt = 0;
-  libnet_ptag_t ethert = 0;
-  u_short hrd;
   char errbuf[LIBNET_ERRBUF_SIZE];
 
   int rtn = -1;
 
-  if ((l = libnet_init(LIBNET_LINK_ADV, device, errbuf)) == NULL) {
+  if ((l = libnet_init(LIBNET_LINK_ADV,
+                       params->device,
+                       errbuf)) == NULL) {
     ERROR_COMMENT("Unable to initialize libnet\n");
     return -1;
   }
+
+  // Get hardware (MAC) address
 
   if ((hw_addr = libnet_get_hwaddr(l)) == NULL) {
     ERROR_COMMENT("Unable to read HW address.\n");
     goto _error;
   }
 
-  if (!ipaddress_source) {
-    ip_addr = libnet_get_ipaddr4(l);
-  } else {
-    ip_addr = ipaddress_source;
-  }
-
-  uint8_t *_ip_addr = (uint8_t *)(&ip_addr);
-
   DEBUG_PRINT("Interface HW Address %s\n",
               int_to_mac((unsigned char*)hw_addr));
-  DEBUG_PRINT("Interface IP Address %d.%d.%d.%d\n",
-              _ip_addr[0], _ip_addr[1], _ip_addr[2], _ip_addr[3]);
 
+  // Get link type
+
+  u_short hrd;
   switch (l->link_type) {
     case 1: /* DLT_EN10MB */
       hrd = ARPHRD_ETHER;
@@ -95,62 +85,88 @@ int arp_send(const char* device, uint32_t ip_probe,
       goto _error;
   }
 
-  // Now calculate subnet mask
-  uint32_t _subnet = ntohl(subnet);
-  uint32_t _ip_probe = ntohl(ip_probe);
+  // Now loop over possible networks
 
-  for (uint32_t hostid=1; hostid < (~_subnet); hostid++) {
-    uint32_t ip = htonl(_ip_probe + hostid);
+  for (int net = 0; net < params->num_network; net++) {
+    uint32_t ip_addr;
+    libnet_ptag_t arpt = 0;
+    libnet_ptag_t ethert = 0;
+
+    // Set the IP Address from either
+    // interface or config file
+
+    if (!params->network[net].ipaddress_source) {
+      ip_addr = libnet_get_ipaddr4(l);
+    } else {
+      ip_addr = params->network[net].ipaddress_source;
+    }
+    // Now calculate subnet mask
+    uint32_t _subnet = ntohl(params->network[net].subnet);
+    uint32_t _ip_probe = ntohl(params->network[net].ipaddress);
 
 #ifdef DEBUG
-    struct in_addr _ip;
-    _ip.s_addr = ip;
-    DEBUG_PRINT("Probing : %s\n", inet_ntoa(_ip));
+    if (params->network[net].vlan) {
+      DEBUG_PRINT("VLAN : %d PRI : %d DEI : %d\n",
+                  params->network[net].vlan,
+                  params->network[net].vlan_pri,
+                  params->network[net].vlan_dei);
+    }
 #endif
 
-    if ((arpt = libnet_build_arp(hrd, ETHERTYPE_IP, 6, 4,
-                                 ARPOP_REQUEST,
-                                 (uint8_t*)hw_addr, _ip_addr,
-                                 hw_bcast, (uint8_t*)(&ip),
-                                 NULL, 0, l, arpt)) == -1) {
-      ERROR_PRINT("Can't build ARP header: %s\n", libnet_geterror(l));
-      goto _error;
-    }
+    // Loop over all addresses in subnet
+    for (uint32_t hostid=1; hostid < (~_subnet); hostid++) {
+      uint32_t ip = htonl(_ip_probe + hostid);
 
-    if (ethert == 0) {
-      if (vlan) {
-        if (vlan) {
-          DEBUG_PRINT("VLAN : %d PRI : %d DEI : %d\n",
-            vlan, vlan_pri, vlan_dei);
-        }
-        if ((ethert = libnet_build_802_1q(hw_bcast, (uint8_t*)hw_addr,
-                                          ETHERTYPE_VLAN,    /* TPI */
-                                          vlan_pri, vlan_dei, vlan,
-                                          ETHERTYPE_ARP, NULL, 0, l,
-                                          ethert)) == -1) {
-          ERROR_PRINT("Can't build 802.1q header: %s\n", libnet_geterror(l));
-          goto _error;
-        }
-      } else {
-        if ((ethert = libnet_build_ethernet(hw_bcast, (uint8_t*)hw_addr,
+#ifdef DEBUG
+      struct in_addr _ip;
+      _ip.s_addr = ip;
+      DEBUG_PRINT("Probing : %s\n", inet_ntoa(_ip));
+#endif
+
+      if ((arpt = libnet_build_arp(hrd, ETHERTYPE_IP, 6, 4,
+                                  ARPOP_REQUEST,
+                                  (uint8_t*)hw_addr,
+                                  (uint8_t*)&ip_addr,
+                                  hw_bcast, (uint8_t*)(&ip),
+                                  NULL, 0, l, arpt)) == -1) {
+        ERROR_PRINT("Can't build ARP header: %s\n", libnet_geterror(l));
+        goto _error;
+      }
+
+      if (ethert == 0) {
+        if (params->network[net].vlan) {
+          if ((ethert = libnet_build_802_1q(hw_bcast, (uint8_t*)hw_addr,
+                                            ETHERTYPE_VLAN,    /* TPI */
+                                            params->network[net].vlan_pri,
+                                            params->network[net].vlan_dei,
+                                            params->network[net].vlan,
                                             ETHERTYPE_ARP, NULL, 0, l,
                                             ethert)) == -1) {
-          ERROR_PRINT("Can't build ethernet header: %s\n", libnet_geterror(l));
-          goto _error;
+            ERROR_PRINT("Can't build 802.1q header: %s\n", libnet_geterror(l));
+            goto _error;
+          }
+        } else {
+          if ((ethert = libnet_build_ethernet(hw_bcast, (uint8_t*)hw_addr,
+                                              ETHERTYPE_ARP, NULL, 0, l,
+                                              ethert)) == -1) {
+            ERROR_PRINT("Can't build ethernet header: %s\n",
+                        libnet_geterror(l));
+            goto _error;
+          }
         }
       }
-    }
 
-    if (libnet_write(l) == -1) {
-      ERROR_PRINT("Write error: %s\n", libnet_geterror(l));
-      goto _error;
-    }
+      if (libnet_write(l) == -1) {
+        ERROR_PRINT("Write error: %s\n", libnet_geterror(l));
+        goto _error;
+      }
 
-    // Now sleep
-    if (sleep_usec != 0) {
-      usleep(sleep_usec);
-    }
-  }
+      // Now sleep
+      if (params->arp_delay != 0) {
+        usleep(params->arp_delay);
+      }
+    }  // Single subnet
+  }  // All subnets
 
   rtn = 0;
 
@@ -164,14 +180,7 @@ void* arp_thread(void *ctx) {
 
   for (;;) {
     for (int i = 0; i < params->num_network; i++) {
-      arp_send(params->device,
-               params->network[i].ipaddress,
-               params->network[i].subnet,
-               params->arp_delay,
-               params->network[i].vlan_pri,
-               params->network[i].vlan_dei,
-               params->network[i].vlan,
-               params->network[i].ipaddress_source);
+      arp_send(params);
     }
 
     DEBUG_PRINT("Waiting for %ds\n", params->arp_loop_delay);
