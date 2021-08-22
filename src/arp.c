@@ -97,8 +97,10 @@ int arp_send(arpwatch_params *params) {
 
     if (!params->network[net].ipaddress_source) {
       ip_addr = libnet_get_ipaddr4(l);
+      DEBUG_COMMENT("Using interface IP address\n");
     } else {
       ip_addr = params->network[net].ipaddress_source;
+      DEBUG_COMMENT("Using ipaddress_source for IP address\n");
     }
     // Now calculate subnet mask
     uint32_t _subnet = ntohl(params->network[net].subnet);
