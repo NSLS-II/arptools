@@ -161,7 +161,7 @@ void * mysql_thread(void * arg) {
         }
       }
 
-      if (arp->type & BUFFER_TYPE_DHCP) {
+      if ((arp->type & BUFFER_TYPE_DHCP) && (*arp->dhcp_name)) {
         snprintf(sql_buffer, sizeof(sql_buffer),
                 "UPDATE "
                 "dhcp_name = '%s' "
