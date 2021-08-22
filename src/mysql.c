@@ -135,7 +135,6 @@ void * mysql_thread(void * arg) {
       // hostname
       // vlan
       //
-
       snprintf(sql_buffer, sizeof(sql_buffer),
               "INSERT INTO arpdata "
               "(hw_address, vlan, location, "
@@ -156,7 +155,7 @@ void * mysql_thread(void * arg) {
 
       if (mysql_real_query(con, sql_buffer, strlen(sql_buffer))) {
         if (mysql_handle_error(con) == ER_DUP_ENTRY) {
-          ALERT_PRINT("Duplicate entry found for %s %d %s\n",
+          ALERT_PRINT("Duplicate database entry found for %s %d %s\n",
                       hw_addr, arp->vlan, params->location);
         }
       }
@@ -167,7 +166,8 @@ void * mysql_thread(void * arg) {
                 "dhcp_name = '%s' "
                 "WHERE hw_address = '%s' "
                 "AND vlan = %d AND location = '%s';",
-                arp->dhcp_name, hw_addr, arp->vlan, params->location);
+                arp->dhcp_name, hw_addr, arp->vlan,
+                params->location);
 
         DEBUG_PRINT("DHCP SQL query : %s\n", sql_buffer);
 
