@@ -269,7 +269,7 @@ int read_interface_config(arpwatch_params *params,
     if (config_setting_lookup_string(net, "ipaddress_source", &str)) {
       struct in_addr addr;
       if (!inet_aton(str, &addr)) {
-        ERROR_COMMENT("Invalid subnet mask specified\n");
+        ERROR_COMMENT("Invalid ipaddress_source specified\n");
         goto _error;
       }
       params->network[i].ipaddress_source = addr.s_addr;
