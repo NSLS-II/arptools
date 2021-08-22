@@ -483,7 +483,7 @@ int capture_ip_packet(arpwatch_params *params,
   if (iptr->proto == IP_PROTO_UDP) {
     // We have a UDP Packet
     struct udphdr *uptr = (struct udphdr *)(packet
-                          + sizeof(struct ether_header)
+                          + ether_header_size(packet)
                           + sizeof(struct ipbdy));
 
     d->type = BUFFER_TYPE_UDP;
