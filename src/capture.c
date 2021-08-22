@@ -88,10 +88,9 @@ uint16_t ether_get_vlan(arpwatch_params *params, const u_char *packet) {
     struct ethernet_header_8021q *vlan_hdr =
       (struct ethernet_header_8021q *)packet;
     vlan = ntohs(vlan_hdr->tci) & 0x0FFF;
-
-    DEBUG_PRINT("VLAN Tag = %d\n", vlan);
   }
 
+  DEBUG_PRINT("VLAN Tag = %d\n", vlan);
   return vlan;
 }
 
