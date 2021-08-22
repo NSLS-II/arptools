@@ -43,6 +43,7 @@
 #include <string.h>
 #include <netdb.h>
 #include <mysql/mysql.h>
+#include <mysql/mysqld_error.h>
 
 #include "debug.h"
 #include "buffer.h"
@@ -50,8 +51,16 @@
 #include "utils.h"
 #include "arpwatch.h"
 
-void mysql_print_error(MYSQL *con) {
-  ERROR_PRINT("MySQL Error : %s\n", mysql_error(con));
+unsigned int mysql_handle_error(MYSQL *con) {
+  const char *err = mysql_error(con);
+  unsigned int errno = mysql_errno(con);
+
+  if (errno) {
+    // We have a valid SQL Error string
+    ERROR_PRINT("MySQL Error : %s\n", err);
+  }
+
+  return errno;
 }
 
 void * mysql_thread(void * arg) {
@@ -62,7 +71,7 @@ void * mysql_thread(void * arg) {
   for (;;) {
     MYSQL *con = mysql_init(NULL);
     if (!con) {
-      mysql_print_error(con);
+      mysql_handle_error(con);
       goto _error;
     }
 
@@ -71,7 +80,7 @@ void * mysql_thread(void * arg) {
                            params->password,
                            params->database,
                            0, NULL, 0) == NULL) {
-      mysql_print_error(con);
+      mysql_handle_error(con);
       goto _error;
     }
 
@@ -80,7 +89,7 @@ void * mysql_thread(void * arg) {
     while (arp) {
       char sql_buffer[100000];
       char time_buffer[256];
-      char hostname[256];
+      char hostname[256] = "\0";
 
       struct tm gm;
       if (localtime_r(&(arp->ts.tv_sec), &gm)) {
@@ -97,96 +106,74 @@ void * mysql_thread(void * arg) {
       // Now lookup DNS entry
       // TODO(swilkins) : Use reentrant version here
 
-      struct  hostent *he = gethostbyaddr(&arp->ip_addr, sizeof(arp->ip_addr),
+      struct  hostent *he = gethostbyaddr(&arp->ip_addr,
+                                          sizeof(arp->ip_addr),
                                           AF_INET);
       if (he) {
-        strncpy(hostname, he->h_name, sizeof(hostname));
+        snprintf(hostname, sizeof(hostname), "'%s'", he->h_name);
       } else {
-        strncpy(hostname, "(none)", sizeof(hostname));
+        snprintf(hostname, sizeof(hostname), "NULL");
       }
 
-      DEBUG_PRINT("Hostname : %s\n", hostname);
+      DEBUG_PRINT("Hostname : %s\n", he->h_name);
 
       const char *hw_addr = int_to_mac(arp->hw_addr);
       const char *ip_addr = inet_ntoa(arp->ip_addr);
+      //
+      // Database:
+      // Currently KEY fields are (hw_address, vlan, location)
+      // This allows for duplicate MACs as long as they are
+      // Unique to VLAN and location
+      //
+      // First lets insert the common data of
+      // hw_address
+      // ip_address
+      // location
+      // label
+      // type
+      // last_seen
+      // hostname
+      // vlan
+      //
 
-      if ((arp->type & BUFFER_TYPE_ARP) ||
-          (arp->type & BUFFER_TYPE_UDP) ||
-          (arp->type & BUFFER_TYPE_IP)) {
-        snprintf(sql_buffer, sizeof(sql_buffer),
-                "INSERT INTO arpdata "
-                "(hw_address, ip_address, location, "
-                "label, type, last_seen, hostname, vlan) "
-                "VALUES ('%s', '%s', '%s', '%s', "
-                "%d, '%s', '%s', %d) "
-                "ON DUPLICATE KEY UPDATE "
-                "ip_address = '%s', "
-                "location = '%s', "
-                "label = '%s', "
-                "type = type | %d, "
-                "last_seen = '%s', "
-                "hostname = '%s', "
-                "vlan = %d;",
-                hw_addr,
-                ip_addr, params->location, params->label,
-                arp->type, time_buffer, hostname, arp->vlan,
-                ip_addr, params->location, params->label,
-                arp->type, time_buffer, hostname, arp->vlan);
+      snprintf(sql_buffer, sizeof(sql_buffer),
+              "INSERT INTO arpdata "
+              "(hw_address, vlan, location, "
+              "label, ip_address, type, last_seen, hostname) "
+              "VALUES ('%s', '%s', '%s', '%s', "
+              "%d, '%s', %s, %d) "
+              "ON DUPLICATE KEY UPDATE "
+              "ip_address = '%s', "
+              "label = '%s', "
+              "type = type | %d, "
+              "last_seen = '%s', "
+              "hostname = %s",
+              hw_addr, arp->vlan, params->location,  // KEY FIELDS
+              params->label, ip_addr, arp->type, time_buffer, hostname,
+              ip_addr, params->label, arp->type, time_buffer, hostname);
 
-        DEBUG_PRINT("ARP/IP/UDP %d SQL query : %s\n", arp->type, sql_buffer);
+      DEBUG_PRINT("BASE SQL query : %s\n", sql_buffer);
 
-        if (mysql_real_query(con, sql_buffer, strlen(sql_buffer))) {
-          mysql_print_error(con);
+      if (mysql_real_query(con, sql_buffer, strlen(sql_buffer))) {
+        if (mysql_handle_error(con) == ER_DUP_ENTRY) {
+          ALERT_PRINT("Duplicate entry found for %s %d %s\n",
+                      hw_addr, arp->vlan, params->location);
         }
-      } else if (arp->type & BUFFER_TYPE_DHCP) {
+      }
+
+      if (arp->type & BUFFER_TYPE_DHCP) {
         snprintf(sql_buffer, sizeof(sql_buffer),
-                "INSERT INTO arpdata "
-                "(hw_address, location, label, "
-                "last_seen, dhcp_name, type, vlan) "
-                "VALUES ('%s', '%s', '%s', '%s', '%s', %d, %d) "
-                "ON DUPLICATE KEY UPDATE "
-                "location = '%s', "
-                "label = '%s', "
-                "last_seen = '%s', "
-                "dhcp_name = '%s', "
-                "type = type | %d, "
-                "vlan = %d;",
-                hw_addr,
-                params->location, params->label, time_buffer,
-                arp->dhcp_name, arp->type, arp->vlan,
-                params->location, params->label, time_buffer,
-                arp->dhcp_name, arp->type, arp->vlan);
+                "UPDATE "
+                "dhcp_name = '%s' "
+                "WHERE hw_address = '%s' "
+                "AND vlan = %d AND location = '%s';",
+                arp->dhcp_name, hw_addr, arp->vlan, params->location);
 
         DEBUG_PRINT("DHCP SQL query : %s\n", sql_buffer);
 
         if (mysql_real_query(con, sql_buffer, strlen(sql_buffer))) {
-          mysql_print_error(con);
+          mysql_handle_error(con);
         }
-      } else if (arp->type & BUFFER_TYPE_UNKNOWN) {
-        snprintf(sql_buffer, sizeof(sql_buffer),
-                "INSERT INTO arpdata "
-                "(hw_address, location, label, "
-                "last_seen, type, vlan) "
-                "VALUES ('%s', '%s', '%s', '%s', %d, %d) "
-                "ON DUPLICATE KEY UPDATE "
-                "location = '%s', "
-                "label = '%s', "
-                "last_seen = '%s', "
-                "type = type | %d, "
-                "vlan = %d;",
-                hw_addr,
-                params->location, params->label, time_buffer,
-                arp->type, arp->vlan,
-                params->location, params->label, time_buffer,
-                arp->type, arp->vlan);
-
-        DEBUG_PRINT("Unknown name SQL query : %s\n", sql_buffer);
-
-        if (mysql_real_query(con, sql_buffer, strlen(sql_buffer))) {
-          mysql_print_error(con);
-        }
-      } else {
-        ERROR_PRINT("Unknown packet type %d\n", arp->type);
       }
 
       buffer_advance_tail(&(params->data_buffer));
