@@ -388,8 +388,8 @@ int capture_dhcp_packet(arpwatch_params *params,
   // Set to DHCP type
   d->type = BUFFER_TYPE_DHCP_ERR;
 
-  // Set default hostname
-  strncpy(d->dhcp_name, "(none)", BUFFER_NAME_MAX);
+  // Set default hostname to null string
+  *d->dhcp_name = '\0';
 
   // Ok now we can process options.
 
