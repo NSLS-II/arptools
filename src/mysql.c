@@ -163,7 +163,7 @@ void * mysql_thread(void * arg) {
 
       if ((arp->type & BUFFER_TYPE_DHCP) && (*arp->dhcp_name)) {
         snprintf(sql_buffer, sizeof(sql_buffer),
-                "UPDATE "
+                "UPDATE arpdata SET "
                 "dhcp_name = '%s' "
                 "WHERE hw_address = '%s' "
                 "AND vlan = %d AND location = '%s';",
