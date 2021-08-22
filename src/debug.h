@@ -38,6 +38,8 @@
 #ifndef SRC_DEBUG_H_
 #define SRC_DEBUG_H_
 
+extern int debug_flag;
+
 #ifdef SYSTEMD
 #include <systemd/sd-daemon.h>
 #else
@@ -58,11 +60,11 @@
 #ifdef DEBUG
 
 #define DEBUG_PRINT(fmt, ...) \
-  fprintf(stderr, SD_DEBUG "%s:%-4d:%s(): " fmt, \
+  if (debug_flag) fprintf(stderr, SD_DEBUG "%s:%-4d:%s(): " fmt, \
           __FILENAME__, __LINE__, __func__, __VA_ARGS__);
 
 #define DEBUG_COMMENT(txt) \
-  fprintf(stderr, SD_DEBUG "%s:%-4d:%s(): %s", \
+  if (debug_flag) fprintf(stderr, SD_DEBUG "%s:%-4d:%s(): %s", \
           __FILENAME__, __LINE__, __func__, txt);
 
 #define NOTICE_PRINT(fmt, ...) \

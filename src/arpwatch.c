@@ -56,14 +56,16 @@ extern const char* ARPTOOLS_GIT_REV;
 extern const char* ARPTOOLS_GIT_BRANCH;
 extern const char* ARPTOOLS_GIT_VERSION;
 
-int read_global_config(arpwatch_params *params) {
+int debug_flag = 0;
+
+int read_global_config(arpwatch_params *params, const char *filename) {
   config_t cfg;
   const char *str;
   int rtn = -1;
 
   config_init(&cfg);
 
-  if (!config_read_file(&cfg, ARPWATCH_CONFIG_FILE)) {
+  if (!config_read_file(&cfg, filename)) {
     ERROR_PRINT("%s:%d - %s\n", config_error_file(&cfg),
                 config_error_line(&cfg), config_error_text(&cfg));
     goto _error;
@@ -127,21 +129,24 @@ int read_global_config(arpwatch_params *params) {
 
   rtn = 0;
 
+  NOTICE_PRINT("Read global info from config file %s\n",
+               filename);
+
 _error:
   config_destroy(&cfg);
-  NOTICE_PRINT("Read global info from config file %s\n",
-             ARPWATCH_CONFIG_FILE);
   return rtn;
 }
 
-int read_interface_config(arpwatch_params *params, int interface_num) {
+int read_interface_config(arpwatch_params *params,
+                          const char* filename,
+                          int interface_num) {
   config_t cfg;
   const char *str;
   int rtn = -1;
 
   config_init(&cfg);
 
-  if (!config_read_file(&cfg, ARPWATCH_CONFIG_FILE)) {
+  if (!config_read_file(&cfg, filename)) {
     ERROR_PRINT("%s:%d - %s\n", config_error_file(&cfg),
                 config_error_line(&cfg), config_error_text(&cfg));
     goto _error;
@@ -284,8 +289,64 @@ _error:
 
 int main(int argc, char *argv[]) {
   arpwatch_params params;
-  (void)argc;
-  (void)argv;
+  char *config_filename = ARPWATCH_CONFIG_FILE;
+
+  // Process command line options
+
+  while (1) {
+    static struct option long_options[] = {
+      // These options set a flag
+      {"debug",   no_argument,       &debug_flag, 1},
+      {"breif",   no_argument,       &debug_flag, 0},
+      {"config",  required_argument, 0, 'c'},
+      {"version", no_argument,       0, 'v'},
+      {0, 0, 0, 0}
+    };
+
+    int option_index = 0;
+
+    int c = getopt_long(argc, argv, "bdvc:",
+                        long_options, &option_index);
+
+    if (c == -1) {
+      break;
+    }
+
+    switch (c) {
+      case 0:
+        // If this option set a flag, do nothing else now.
+        if (long_options[option_index].flag != 0) {
+          break;
+        }
+        fprintf(stderr, "option %s", long_options[option_index].name);
+        if (optarg)
+          fprintf(stderr, " with arg %s", optarg);
+        fprintf(stderr, "\n");
+        break;
+
+      case 'c':
+        // Set the config file
+        config_filename = optarg;
+        break;
+
+      case 'v':
+        // Print Version info
+        fprintf(stderr, "Version : %s\n", ARPTOOLS_GIT_VERSION);
+        exit(0);
+        break;
+
+      case '?':
+        exit(-1);
+        break;
+
+      default:
+        exit(-1);
+    }
+  }
+
+  strncpy(params.program,
+          ARPWATCH_PCAP_PROGRAM,
+          ARPWATCH_CONFIG_MAX_STRING);
 
   DEBUG_PRINT("git rev     = %s\n", ARPTOOLS_GIT_REV);
   DEBUG_PRINT("git branch  = %s\n", ARPTOOLS_GIT_BRANCH);
@@ -293,11 +354,7 @@ int main(int argc, char *argv[]) {
 
   NOTICE_PRINT("Startup (version = %s)\n", ARPTOOLS_GIT_VERSION);
 
-  strncpy(params.program,
-          ARPWATCH_PCAP_PROGRAM,
-          ARPWATCH_CONFIG_MAX_STRING);
-
-  if (read_global_config(&params)) {
+  if (read_global_config(&params, config_filename)) {
     ERROR_COMMENT("Error reading config file\n");
     return EXIT_FAILURE;
   }
@@ -311,7 +368,7 @@ int main(int argc, char *argv[]) {
     } else if (pid == 0) {
       DEBUG_PRINT("Child (%d): %d from %d\n", i, getpid(), getppid());
 
-      if (read_interface_config(&params, i)) {
+      if (read_interface_config(&params, config_filename, i)) {
         ERROR_COMMENT("Error reading config file\n");
         exit(EXIT_FAILURE);
       }
