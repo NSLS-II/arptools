@@ -191,8 +191,7 @@ int read_interface_config(arpwatch_params *params, int interface_num) {
 
   if (!config_setting_lookup_int(interface, "native_vlan",
                                  &params->native_vlan)) {
-    ERROR_COMMENT("No native vlan in config file.\n");
-    goto _error;
+    params->native_vlan = 0;
   }
 
   //
@@ -249,8 +248,7 @@ int read_interface_config(arpwatch_params *params, int interface_num) {
 
     if (!config_setting_lookup_int(net, "vlan",
                                    &params->network[i].vlan)) {
-      ERROR_COMMENT("No vlan defined in config file\n");
-      goto _error;
+      params->network[i].vlan = 0;
     }
 
     if (!config_setting_lookup_int(net, "vlan_pri",
