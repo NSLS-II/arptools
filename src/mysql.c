@@ -89,7 +89,7 @@ void * mysql_thread(void * arg) {
     while (arp) {
       char sql_buffer[100000];
       char time_buffer[256];
-      char hostname[256] = "\0";
+      char hostname[256];
 
       struct tm gm;
       if (localtime_r(&(arp->ts.tv_sec), &gm)) {
@@ -111,11 +111,12 @@ void * mysql_thread(void * arg) {
                                           AF_INET);
       if (he) {
         snprintf(hostname, sizeof(hostname), "'%s'", he->h_name);
+        DEBUG_PRINT("Hostname : %s\n", hostname);
       } else {
         snprintf(hostname, sizeof(hostname), "NULL");
+        DEBUG_PRINT("Hostname (not found) : %s\n", hostname);
       }
 
-      DEBUG_PRINT("Hostname : %s\n", he->h_name);
 
       const char *hw_addr = int_to_mac(arp->hw_addr);
       const char *ip_addr = inet_ntoa(arp->ip_addr);
