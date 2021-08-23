@@ -92,6 +92,11 @@ int arp_send(arpwatch_params *params) {
     libnet_ptag_t arpt = 0;
     libnet_ptag_t ethert = 0;
 
+    // Clear the packet info (just incase we change from
+    // Tagged to Untagged
+
+    libnet_clear_packet(l);
+
     // Set the IP Address from either
     // interface or config file
 
