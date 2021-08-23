@@ -13,8 +13,9 @@ CREATE TABLE arpdata(
   last_seen         DATETIME,
   created           DATETIME DEFAULT CURRENT_TIMESTAMP,
   registered        BOOL DEFAULT false,
-  last_notified     DATETIME,
-  last_audited      DATETIME,
+  notified          DATETIME,
+  block_notified    DATETIME,
+  audited           DATETIME,
   dhcp_name         VARCHAR(256),
   visible           BOOL DEFAULT TRUE,
   PRIMARY KEY (hw_address, vlan, location)
