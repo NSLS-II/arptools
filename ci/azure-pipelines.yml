@@ -8,7 +8,7 @@ trigger:
     - v*
 
 variables:
-  System.Debug: false
+  System.Debug: true
 
 stages:
 - stage: Build
