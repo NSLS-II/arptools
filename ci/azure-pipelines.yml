@@ -69,6 +69,35 @@ stages:
       displayName: Build (DEBUG Version)
       condition: ne(variables.arch, 'armhf')
 
+  - job: Package
+    dependsOn: Package
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    strategy:
+      matrix:
+        centos8:
+          containerImage: stuwilkins/arptools-build-centos8:latest
+          pkg_type: redhat
+          rpmrelease: centos8
+          cmake: cmake
+        debian10_amd64:
+          containerImage: stuwilkins/arptools-build-deb10-amd64:latest
+          debrelease: debian10
+          pkg_type: debian
+          cmake: cmake
+          arch: amd64
+        debian10_armhf:
+          containerImage: stuwilkins/arptools-build-deb10-armhf:latest
+          debrelease: debian10
+          pkg_type: debian
+          cmake: cmake
+          arch: armhf
+
+    container:
+      image: $[ variables['containerImage'] ]
+
+    steps:
     - script: |
         GITDESC=$(git describe --abbrev=0)
         VERSION=$(git describe --abbrev=0 | sed -En 's/v([0-9]+\.)([0-9]+\.)?([0-9]+)/\1\2\3/p')
@@ -135,7 +164,7 @@ stages:
       condition: and(succeeded(), eq(variables.pkg_type, 'redhat'), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
 
   - job: Publish
-    dependsOn: Build
+    dependsOn: Package
     condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/v')
     steps:
       - script: |
