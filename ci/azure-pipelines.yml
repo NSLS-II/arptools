@@ -70,7 +70,7 @@ stages:
       condition: ne(variables.arch, 'armhf')
 
   - job: Package
-    dependsOn: Package
+    dependsOn: Build
     pool:
       vmImage: 'ubuntu-latest'
 
