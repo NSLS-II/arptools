@@ -1,6 +1,5 @@
 # syntax=docker/dockerfile:1
 FROM debian:10
-RUN dpkg --add-architecture armhf
 RUN apt-get update && apt-get -y upgrade
 RUN apt-get -y install build-essential cmake
 RUN apt-get -y install libmariadb-dev-compat libpcap0.8-dev libnet1-dev libconfig-dev libsystemd-dev
