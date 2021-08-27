@@ -219,6 +219,8 @@ int read_interface_config(arpwatch_params *params,
       if (!config_setting_lookup_int(_ignore, "vlan",
                                     &params->vlan_ignore[i])) {
         ERROR_COMMENT("Missing vlan in ignore block\n");
+      } else {
+        DEBUG_PRINT("Ignoring VLAN %d\n", params->vlan_ignore[i]);
       }
     }
 
