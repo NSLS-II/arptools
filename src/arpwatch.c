@@ -200,6 +200,35 @@ int read_interface_config(arpwatch_params *params,
   }
 
   //
+  // Check if we have vlans to ignore
+  //
+
+  config_setting_t *ignore = config_setting_lookup(interface, "ignore");
+  if (ignore) {
+    params->num_vlan_ignore = config_setting_length(ignore);
+    params->vlan_ignore = (int *)
+      malloc(sizeof(int) * params->num_vlan_ignore);
+
+    if (!params->vlan_ignore) {
+      ERROR_COMMENT("Unable to allocate memory for \n");
+      goto _error;
+    }
+
+    for (int i = 0; i < params->num_vlan_ignore; i++) {
+      config_setting_t *_ignore = config_setting_get_elem(ignore, i);
+      if (!config_setting_lookup_int(_ignore, "vlan",
+                                    &params->vlan_ignore[i])) {
+        ERROR_COMMENT("Missing vlan in ignore block\n");
+      }
+    }
+
+  } else {
+    params->num_vlan_ignore = 0;
+    params->vlan_ignore = NULL;
+  }
+
+
+  //
   // Now process networks per interface
   //
 

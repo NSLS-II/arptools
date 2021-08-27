@@ -72,6 +72,8 @@ typedef struct {
   int ignore_tagged;
   int arp_requests;
   int native_vlan;
+  int *vlan_ignore;
+  int num_vlan_ignore;
   char program[ARPWATCH_CONFIG_MAX_STRING];
   char device[ARPWATCH_CONFIG_MAX_STRING];
   char hostname[ARPWATCH_CONFIG_MAX_STRING];

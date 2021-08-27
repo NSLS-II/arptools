@@ -524,10 +524,18 @@ void capture_callback(u_char *args, const struct pcap_pkthdr* pkthdr,
     struct ethernet_header_8021q *_eptr =
         (struct ethernet_header_8021q *) packet;
     type = ntohs(_eptr->ether_type);
-#ifdef DEBUG
+
     uint16_t vlan = ether_get_vlan(params, packet);
+
+    if (params->vlan_ignore) {
+      for (int i = 0; i < params->num_vlan_ignore; i++) {
+        if (vlan == params->vlan_ignore[i]) {
+          DEBUG_PRINT("Ignoring packet from vlan = %d\n", vlan);
+          return;
+        }
+      }
+    }
     DEBUG_PRINT("TAGGED Packet type = 0x%0X vlan = %d\n", type, vlan);
-#endif
   }
 
   if (type == ETHERTYPE_IP) {
