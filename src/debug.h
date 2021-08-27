@@ -94,14 +94,14 @@ extern int debug_flag;
 #else
 
 #define DEBUG_PRINT(fmt, ...) \
-  if (debug_flag) fprintf(stderr, SD_DEBUG fmt, \
+  if (debug_flag) fprintf(stderr, SD_DEBUG " " fmt, \
           __VA_ARGS__);
 
 #define DEBUG_COMMENT(txt) \
   if (debug_flag) fprintf(stderr, SD_DEBUG " %s", txt);
 
 #define NOTICE_PRINT(fmt, ...) \
-  fprintf(stderr, SD_NOTICE fmt, \
+  fprintf(stderr, SD_NOTICE " " fmt, \
           __VA_ARGS__);
 
 #define NOTICE_COMMENT(txt) \
