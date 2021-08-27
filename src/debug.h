@@ -60,35 +60,35 @@ extern int debug_flag;
 #ifdef DEBUG
 
 #define DEBUG_PRINT(fmt, ...) \
-  if (debug_flag) fprintf(stderr, SD_DEBUG "%s:%-4d:%s(): " fmt, \
+  if (debug_flag) fprintf(stderr, SD_DEBUG " %s:%-4d:%s(): " fmt, \
           __FILENAME__, __LINE__, __func__, __VA_ARGS__);
 
 #define DEBUG_COMMENT(txt) \
-  if (debug_flag) fprintf(stderr, SD_DEBUG "%s:%-4d:%s(): %s", \
+  if (debug_flag) fprintf(stderr, SD_DEBUG " %s:%-4d:%s(): %s", \
           __FILENAME__, __LINE__, __func__, txt);
 
 #define NOTICE_PRINT(fmt, ...) \
-  fprintf(stderr, SD_NOTICE "%s:%-4d:%s(): " fmt, \
+  fprintf(stderr, SD_NOTICE " %s:%-4d:%s(): " fmt, \
           __FILENAME__, __LINE__, __func__, __VA_ARGS__);
 
 #define NOTICE_COMMENT(txt) \
-  fprintf(stderr, SD_NOTICE "%s:%-4d:%s(): %s", \
+  fprintf(stderr, SD_NOTICE " %s:%-4d:%s(): %s", \
           __FILENAME__, __LINE__, __func__, txt);
 
 #define ERROR_PRINT(fmt, ...) \
-  fprintf(stderr, SD_ERR "%s:%-4d:%s(): " fmt, \
+  fprintf(stderr, SD_ERR " %s:%-4d:%s(): " fmt, \
           __FILENAME__, __LINE__, __func__, __VA_ARGS__);
 
 #define ERROR_COMMENT(txt) \
-  fprintf(stderr, SD_ERR "%s:%-4d:%s(): %s", \
+  fprintf(stderr, SD_ERR " %s:%-4d:%s(): %s", \
           __FILENAME__, __LINE__, __func__, txt);
 
 #define ALERT_PRINT(fmt, ...) \
-  fprintf(stderr, SD_ALERT "%s:%-4d:%s(): " fmt, \
+  fprintf(stderr, SD_ALERT " %s:%-4d:%s(): " fmt, \
           __FILENAME__, __LINE__, __func__, __VA_ARGS__);
 
 #define ALERT_COMMENT(txt) \
-  fprintf(stderr, SD_ALERT "%s:%-4d:%s(): %s", \
+  fprintf(stderr, SD_ALERT " %s:%-4d:%s(): %s", \
           __FILENAME__, __LINE__, __func__, txt);
 
 #else
@@ -104,22 +104,22 @@ extern int debug_flag;
           __VA_ARGS__);
 
 #define NOTICE_COMMENT(txt) \
-  fprintf(stderr, SD_NOTICE "%s", txt);
+  fprintf(stderr, SD_NOTICE " %s", txt);
 
 #define ERROR_PRINT(fmt, ...) \
-  fprintf(stderr, SD_ERR "%s(): " fmt, \
+  fprintf(stderr, SD_ERR " %s(): " fmt, \
           __func__, __VA_ARGS__);
 
 #define ERROR_COMMENT(txt) \
-  fprintf(stderr, SD_ERR "%s(): %s", \
+  fprintf(stderr, SD_ERR " %s(): %s", \
           __func__, txt);
 
 #define ALERT_PRINT(fmt, ...) \
-  fprintf(stderr, SD_ERR "%s(): " fmt, \
+  fprintf(stderr, SD_ERR " %s(): " fmt, \
           __func__, __VA_ARGS__);
 
 #define ALERT_COMMENT(txt) \
-  fprintf(stderr, SD_ALERT "%s", txt);
+  fprintf(stderr, SD_ALERT " %s", txt);
 
 #endif
 
