@@ -203,7 +203,7 @@ int read_interface_config(arpwatch_params *params,
   // Check if we have vlans to ignore
   //
 
-  config_setting_t *ignore = config_setting_lookup(interface, "ignore");
+  config_setting_t *ignore = config_setting_lookup(interface, "vlan_ignore");
   if (ignore) {
     params->num_vlan_ignore = config_setting_length(ignore);
     params->vlan_ignore = (int *)
@@ -214,14 +214,16 @@ int read_interface_config(arpwatch_params *params,
       goto _error;
     }
 
+    if (config_setting_is_list(ignore) == CONFIG_FALSE) {
+      ERROR_COMMENT("vlan_ignore must be list.\n");
+      goto _error;
+    }
+
+    DEBUG_PRINT("vlan_ignore contains %d vlans.\n", params->num_vlan_ignore);
+
     for (int i = 0; i < params->num_vlan_ignore; i++) {
-      config_setting_t *_ignore = config_setting_get_elem(ignore, i);
-      if (!config_setting_lookup_int(_ignore, "vlan",
-                                    &params->vlan_ignore[i])) {
-        ERROR_COMMENT("Missing vlan in ignore block\n");
-      } else {
-        DEBUG_PRINT("Ignoring VLAN %d\n", params->vlan_ignore[i]);
-      }
+      params->vlan_ignore[i] = config_setting_get_int_elem(ignore, i);
+      DEBUG_PRINT("%d Ignoring VLAN %d\n", i, params->vlan_ignore[i]);
     }
 
   } else {
