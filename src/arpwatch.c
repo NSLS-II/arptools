@@ -366,11 +366,20 @@ int main(int argc, char *argv[]) {
         exit(0);
         break;
 
+      case 'd':
+        debug_flag = 1;
+        break;
+
+      case 'b':
+        debug_flag = 0;
+        break;
+
       case '?':
         exit(-1);
         break;
 
       default:
+        ERROR_COMMENT("Error parsing command line options.\n");
         exit(-1);
     }
   }
@@ -384,6 +393,8 @@ int main(int argc, char *argv[]) {
   DEBUG_PRINT("git version = %s\n", ARPTOOLS_GIT_VERSION);
 
   NOTICE_PRINT("Startup (version = %s)\n", ARPTOOLS_GIT_VERSION);
+
+  DEBUG_PRINT("Reading config file : %s\n", config_filename);
 
   if (read_global_config(&params, config_filename)) {
     ERROR_COMMENT("Error reading config file\n");
