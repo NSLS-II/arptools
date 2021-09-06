@@ -20,3 +20,9 @@ CREATE TABLE arpdata(
   visible           BOOL DEFAULT TRUE,
   PRIMARY KEY (hw_address, vlan, location)
 );
+
+CREATE TABLE devicedata(
+  hw_address        CHAR(17) NOT NULL,
+  vendor            VARCHAR(256),
+  PRIMARY KEY (hw_address)
+);
