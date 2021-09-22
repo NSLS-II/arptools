@@ -92,19 +92,20 @@ interfaces = (
 |----------------|--------|----------------------------------------------------------------------|
 | device         | string | Device name for the interface to listen on                           |
 | label          | string | Label for this interface                                             |
-| ignore_tagged  | bool   | If true, ignore tagged packets on this interface                     |
-| native_vlan    | int    | The native VLAN tag for this interface to use when no tag is present |
 | arp_requests   | int    | If true, send arp requests to the ipaddress range                    |
 | arp_loop_delay | int    | Time in seconds to sleep between sending ARP requests                |
 | arp_delay      | int    | Time in microseconds between ARP requestes from the same subnet      |
+| ignore_tagged  | bool   | If true, ignore tagged packets on this interface                     |
+| native_vlan    | int    | The native VLAN tag for this interface to use when no tag is present |
+| ignore_vlan    | array  | An array of vlan tags to ignore on this interface                    |
 
 ### Networks Config Options
 
-| ipaddress        | string | IP Address for interface to use for sending ARP requests     |
-|------------------|--------|--------------------------------------------------------------|
-| subnet           | string | Subnet mask for ip addresses to use for sending ARP requests |
-| vlan             | string | Subnet mask for ip addresses to use for sending ARP requests |
-| vlan_pri         | string | Subnet mask for ip addresses to use for sending ARP requests |
-| vlan_dei         | string | Subnet mask for ip addresses to use for sending ARP requests |
-| vlan_dei         | string | Subnet mask for ip addresses to use for sending ARP requests |
-| ipaddress_source | string | Subnet mask for ip addresses to use for sending ARP requests |
+| ipaddress        | string | IP Address for interface to use for sending ARP requests               |
+|------------------|--------|------------------------------------------------------------------------|
+| ipaddress        | string | IP Address (network) to use on this interface for sending ARP requests |
+| subnet           | string | Subnet mask for ip addresses to use for sending ARP requests           |
+| vlan             | string | VLAN ID to use on this network                                         |
+| vlan_pri         | string | VLAN Priority                                                          |
+| vlan_dei         | string | VLAN DEI                                                               |
+| ipaddress_source | string | IP Address to use as the source when sending ARP requests              |
