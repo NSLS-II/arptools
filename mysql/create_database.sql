@@ -21,6 +21,8 @@ CREATE TABLE arpdata(
   PRIMARY KEY (hw_address, vlan, location)
 );
 
+CREATE TABLE arpdata_old LIKE arpdata;
+
 CREATE TABLE devicedata(
   hw_address        CHAR(17) NOT NULL,
   vendor            VARCHAR(256),
