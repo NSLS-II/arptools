@@ -123,12 +123,12 @@ int get_fqdn(char *hostname, size_t hostname_len) {
   hints.ai_flags = AI_CANONNAME;
 
   if ((gai_result = getaddrinfo(_hostname, "http", &hints, &info)) != 0) {
-      ERROR_PRINT("getaddrinfo: %s\n", gai_strerror(gai_result));
-      return -1;
+    ERROR_PRINT("getaddrinfo: %s\n", gai_strerror(gai_result));
+    return -1;
   }
 
   if (info == NULL) {
-    ERROR_PRINT("info is null for hostname : %s", _hostname);
+    ERROR_PRINT("info is null for hostname : %s\n", _hostname);
     return -1;
   }
 

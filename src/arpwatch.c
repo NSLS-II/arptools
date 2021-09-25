@@ -397,15 +397,16 @@ int main(int argc, char *argv[]) {
 
   NOTICE_PRINT("Startup (version = %s)\n", ARPTOOLS_GIT_VERSION);
 
+  if (get_fqdn(params.daemon_hostname, ARPWATCH_CONFIG_MAX_STRING)) {
+    ERROR_COMMENT("Unable to get FQDN for deamon process\n");
+    return EXIT_FAILURE;
+  }
+  NOTICE_PRINT("Hostname = %s\n", params.daemon_hostname);
+
   DEBUG_PRINT("Reading config file : %s\n", config_filename);
 
   if (read_global_config(&params, config_filename)) {
     ERROR_COMMENT("Error reading config file\n");
-    return EXIT_FAILURE;
-  }
-
-  if (!get_fqdn(params.daemon_hostname, ARPWATCH_CONFIG_MAX_STRING)) {
-    ERROR_COMMENT("Unable to get FQDN for deamon process");
     return EXIT_FAILURE;
   }
 
