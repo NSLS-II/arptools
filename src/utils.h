@@ -40,5 +40,6 @@
 
 const char * int_to_mac(unsigned char *addr);
 int netbios_decode(char *dec, char *enc, int len);
+int get_fqdn(char *hostname, size_t hostname_len);
 
 #endif  // SRC_UTILS_H_

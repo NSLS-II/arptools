@@ -69,6 +69,7 @@ void * mysql_thread(void * arg) {
   NOTICE_COMMENT("Starting mysql thread\n");
 
   for (;;) {
+    char sql_buffer[100000];
     MYSQL *con = mysql_init(NULL);
     if (!con) {
       mysql_handle_error(con);
@@ -84,10 +85,26 @@ void * mysql_thread(void * arg) {
       goto _error;
     }
 
+    // Write to daemon database
+
+    snprintf(sql_buffer, sizeof(sql_buffer),
+            "INSERT INTO daemondata "
+            "(hostname, iface, last_updated) "
+            "VALUES ('%s','%s',NOW()) "
+            "ON DUPLICATE KEY UPDATE "
+            "last_updated = NOW();",
+            params->daemon_hostname,
+            params->device);
+
+    DEBUG_PRINT("DAEMON SQL query : %s\n", sql_buffer);
+
+    if (mysql_real_query(con, sql_buffer, strlen(sql_buffer))) {
+      mysql_handle_error(con);
+    }
+
     arp_data *arp = buffer_get_tail(&(params->data_buffer), 0);
 
     while (arp) {
-      char sql_buffer[100000];
       char time_buffer[256];
       char hostname[256];
 
@@ -116,7 +133,6 @@ void * mysql_thread(void * arg) {
         snprintf(hostname, sizeof(hostname), "NULL");
         DEBUG_PRINT("Hostname (not found) : %s\n", hostname);
       }
-
 
       const char *hw_addr = int_to_mac(arp->hw_addr);
       const char *ip_addr = inet_ntoa(arp->ip_addr);

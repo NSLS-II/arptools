@@ -51,6 +51,7 @@
 #include "arp.h"
 #include "capture.h"
 #include "arpwatch.h"
+#include "utils.h"
 
 extern const char* ARPTOOLS_GIT_REV;
 extern const char* ARPTOOLS_GIT_BRANCH;
@@ -400,6 +401,11 @@ int main(int argc, char *argv[]) {
 
   if (read_global_config(&params, config_filename)) {
     ERROR_COMMENT("Error reading config file\n");
+    return EXIT_FAILURE;
+  }
+
+  if (!get_fqdn(params.daemon_hostname, ARPWATCH_CONFIG_MAX_STRING)) {
+    ERROR_COMMENT("Unable to get FQDN for deamon process");
     return EXIT_FAILURE;
   }
 

@@ -36,7 +36,16 @@
 //  THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include "utils.h"
+#include "debug.h"
 
 char hexchars[] = { '0', '1', '2', '3', '4', '5',
                     '6', '7', '8', '9', 'A', 'B',
@@ -97,6 +106,37 @@ int netbios_decode(char *dec, char *enc, int len) {
 
     dec[index++] = (__c != ' '?__c:'\0');
   }
+
+  return 0;
+}
+
+int get_fqdn(char *hostname, size_t hostname_len) {
+  struct addrinfo hints, *info;
+  int gai_result;
+  char _hostname[1024];
+
+  gethostname(_hostname, sizeof(_hostname));
+
+  memset(&hints, 0, sizeof hints);
+  hints.ai_family = AF_UNSPEC; /*either IPV4 or IPV6*/
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags = AI_CANONNAME;
+
+  if ((gai_result = getaddrinfo(_hostname, "http", &hints, &info)) != 0) {
+      ERROR_PRINT("getaddrinfo: %s\n", gai_strerror(gai_result));
+      return -1;
+  }
+
+  if (info == NULL) {
+    return -1;
+  }
+
+  // NOTE: info is a linked list with info->ai_next if there are
+  // more than 1 name
+
+  strncpy(hostname, info->ai_canonname, hostname_len);
+
+  freeaddrinfo(info);
 
   return 0;
 }

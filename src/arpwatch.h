@@ -82,6 +82,7 @@ typedef struct {
   char database[ARPWATCH_CONFIG_MAX_STRING];
   char location[ARPWATCH_CONFIG_MAX_STRING];
   char label[ARPWATCH_CONFIG_MAX_STRING];
+  char daemon_hostname[ARPWATCH_CONFIG_MAX_STRING];
   unsigned char hwaddress[ETH_ALEN];
   arpwatch_network *network;
 } arpwatch_params;
