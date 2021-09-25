@@ -128,6 +128,7 @@ int get_fqdn(char *hostname, size_t hostname_len) {
   }
 
   if (info == NULL) {
+    ERROR_COMMENT("info is null");
     return -1;
   }
 
