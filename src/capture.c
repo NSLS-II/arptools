@@ -371,6 +371,7 @@ int capture_epics_packet(arpwatch_params *params,
   // Set the number of PVs
 
   d->pv_num = pv_counter;
+  DEBUG_PRINT("Captured %d EPICS PVs\n", d->pv_num);
 
 #ifndef DEBUG
   (void)iptr;
