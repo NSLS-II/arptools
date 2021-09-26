@@ -67,6 +67,7 @@
 #define BUFFER_TYPE_DHCP_ACK          0x00002000
 #define BUFFER_TYPE_DHCP_NACK         0x00004000
 #define BUFFER_TYPE_DHCP_RELEASE      0x00008000
+#define BUFFER_TYPE_EPICS_BEACON      0x00010000
 
 #define BUFFER_TYPE_ARP               (BUFFER_TYPE_ARP_SRC      | \
                                        BUFFER_TYPE_ARP_DST      | \

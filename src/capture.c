@@ -368,6 +368,35 @@ int capture_epics_packet(arpwatch_params *params,
   return 0;
 }
 
+int capture_epics_beacon_packet(arpwatch_params *params,
+                                const struct pcap_pkthdr* pkthdr,
+                                const u_char* packet) {
+  struct ether_header *eptr = (struct ether_header *) packet;
+
+  unsigned int pos = ether_header_size(packet);
+  struct ipbdy *iptr = (struct ipbdy *) (packet + pos);
+
+  pos += sizeof(struct ipbdy);
+  pos += sizeof(struct udphdr);
+  if (pos > pkthdr->len ) return -1;
+
+  DEBUG_PRINT("EPICS BEACON Packet :  %-20s %-16s\n",
+              ether_ntoa((const struct ether_addr *)&eptr->ether_shost),
+              inet_ntoa(iptr->ip_sip));
+
+#ifndef DEBUG
+  (void)iptr;
+  (void)eptr;
+#endif
+
+  // Set to EPICS TYPE
+  buffer_data *data = &params->data_buffer;
+  arp_data *d = buffer_get_head(data);
+  d->type = BUFFER_TYPE_EPICS_BEACON;
+
+  return 0;
+}
+
 int capture_dhcp_packet(arpwatch_params *params,
                         const struct pcap_pkthdr* pkthdr,
                         const u_char* packet) {
@@ -499,6 +528,8 @@ int capture_ip_packet(arpwatch_params *params,
       capture_epics_packet(params, pkthdr, packet);
     } else if (htons(uptr->dport) == EPICS_PVA_DPORT) {
       capture_epics_pva_packet(params, pkthdr, packet);
+    } else if (htons(uptr->dport) == EPICS_BEACON_DPORT) {
+      capture_epics_beacon_packet(params, pkthdr, packet);
     }
   }
 

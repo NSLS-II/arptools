@@ -58,6 +58,7 @@
 #define NETBIOS_NAMELEN             32
 #define NETBIOS_PORT                137
 #define EPICS_DPORT                 5064
+#define EPICS_BEACON_DPORT          5065
 #define EPICS_PVA_DPORT             5076
 
 struct ethernet_header {
