@@ -43,3 +43,11 @@ CREATE TABLE daemondata (
   last_notified     DATETIME,
   PRIMARY KEY (hostname, iface)
 );
+
+CREATE TABLE epicsdata(
+  hw_address        CHAR(17) NOT NULL,
+  vlan              SMALLINT NOT NULL,
+  pv_name           VARCHAR(256) NOT NULL,
+  last_seen         DATETIME,
+  PRIMARY KEY (hw_address, vlan, pv_name)
+);
