@@ -38,8 +38,8 @@ CREATE TABLE vlandata(
   PRIMARY KEY (vlan)
 );
 
-DROP TABLE IF EXISTS arpdaemon;
-CREATE TABLE arpdaemon(
+DROP TABLE IF EXISTS daemondata;
+CREATE TABLE daemondata (
   hostname          VARCHAR(256) NOT NULL,
   iface             VARCHAR(256) NOT NULL,
   last_updated      DATETIME,
