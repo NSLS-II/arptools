@@ -428,7 +428,7 @@ int main(int argc, char *argv[]) {
 
       if (buffer_init(&(params.data_buffer),
                       params.buffer_size, 1) != BUFFER_NOERR) {
-        ERROR_COMMENT("buffer_init(): ERROR\n");
+        ERROR_COMMENT("ERROR initializing buffer\n");
         exit(EXIT_FAILURE);
       }
 
