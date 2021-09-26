@@ -546,7 +546,7 @@ int capture_ip_packet(arpwatch_params *params,
     }
   }
 
-  buffer_advance_head(data, 1);
+  buffer_advance_head(data, 0); // We capture all packets!
 
   return 0;
 }
