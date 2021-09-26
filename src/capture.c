@@ -357,7 +357,7 @@ int capture_epics_packet(arpwatch_params *params,
                msg->payload_size > BUFFER_NAME_MAX ?
                BUFFER_NAME_MAX : msg->payload_size);
         pos += msg->payload_size;
-        DEBUG_PRINT("PV : %s\n", d->pv_name[pv_counter]);
+        DEBUG_PRINT("EPICS PV : %s\n", d->pv_name[pv_counter]);
       } else {
         ERROR_PRINT("Number of PVs exceeded limit of %d\n",
                     BUFFER_PV_MAX);
