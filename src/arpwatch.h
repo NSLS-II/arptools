@@ -49,7 +49,7 @@
 #define ARPWATCH_ARP_DELAY               50000
 #define ARPWATCH_ARP_LOOP_DELAY          300
 #define ARPWATCH_MYSQL_LOOP_DELAY        120
-#define ARPWATCH_BUFFER_SIZE             1000000
+#define ARPWATCH_BUFFER_SIZE             10000
 
 typedef struct {
   uint32_t ipaddress;
