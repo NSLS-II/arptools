@@ -333,6 +333,13 @@ int capture_epics_packet(arpwatch_params *params,
               ether_ntoa((const struct ether_addr *)&eptr->ether_shost),
               inet_ntoa(iptr->ip_sip));
 
+  // Set to EPICS TYPE
+  buffer_data *data = &params->data_buffer;
+  arp_data *d = buffer_get_head(data);
+  d->type = BUFFER_TYPE_EPICS;
+
+  int pv_counter = 0;
+
   while (pos < pkthdr->len) {
     // Process messages
     struct ca_proto_msg *msg = (struct ca_proto_msg *)
@@ -343,13 +350,18 @@ int capture_epics_packet(arpwatch_params *params,
     } else if (htons(msg->command) == 6) {
       DEBUG_COMMENT("Valid CA_SEARCH_REQUEST\n");
       pos += sizeof(struct ca_proto_msg);
-      char name[256];
-      memset(name, 0, sizeof(name));
-      memcpy(name, packet + pos,
-              msg->payload_size > sizeof(name) ?
-              sizeof(name) : msg->payload_size);
-      pos += msg->payload_size;
-      DEBUG_PRINT("PV : %s\n", name);
+
+      if (pv_counter < BUFFER_PV_MAX) {
+        memset(d->pv_name[pv_counter], 0, BUFFER_NAME_MAX);
+        memcpy(d->pv_name[pv_counter], packet + pos,
+               msg->payload_size > BUFFER_NAME_MAX ?
+               BUFFER_NAME_MAX : msg->payload_size);
+        pos += msg->payload_size;
+        DEBUG_PRINT("PV : %s\n", d->pv_name[pv_counter]);
+      } else {
+        ERROR_PRINT("Number of PVs exceeded limit of %d\n",
+                    BUFFER_PV_MAX);
+      }
     } else {
       break;
     }
@@ -359,11 +371,6 @@ int capture_epics_packet(arpwatch_params *params,
   (void)iptr;
   (void)eptr;
 #endif
-
-  // Set to EPICS TYPE
-  buffer_data *data = &params->data_buffer;
-  arp_data *d = buffer_get_head(data);
-  d->type = BUFFER_TYPE_EPICS;
 
   return 0;
 }
