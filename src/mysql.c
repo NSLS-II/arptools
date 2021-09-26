@@ -193,22 +193,30 @@ void * mysql_thread(void * arg) {
         }
       }
 
-      if (arp->type & BUFFER_TYPE_EPICS) {
-        DEBUG_PRINT("Process %d EPICS PVs\n", arp->pv_num);
-        for (int pvc=0; pvc < arp->pv_num; pvc++) {
-          snprintf(sql_buffer, sizeof(sql_buffer),
-                  "INSERT INTO epicsdata "
-                  "(hw_address, vlan, pv_name, last_seen) "
-                  "VALUES ('%s', %d, '%s', '%s') "
-                  "ON DUPLICATE KEY UPDATE "
-                  "last_seen = '%s';",
-                  hw_addr, arp->vlan, arp->pv_name[pvc],
-                  time_buffer, time_buffer);
+      if ((arp->type & BUFFER_TYPE_EPICS) &&
+          (params->num_epics_pv_vlan)) {
+        // First check if the vlan is correct
 
-          DEBUG_PRINT("EPICSDATA SQL query : %s\n", sql_buffer);
+        for (int i=0; i < params->num_epics_pv_vlan; i++) {
+          if (params->epics_pv_vlan[i] == arp->vlan) {
+            DEBUG_PRINT("Process %d EPICS PVs\n", arp->pv_num);
+            for (int pvc=0; pvc < arp->pv_num; pvc++) {
+              snprintf(sql_buffer, sizeof(sql_buffer),
+                      "INSERT INTO epicsdata "
+                      "(hw_address, vlan, pv_name, last_seen) "
+                      "VALUES ('%s', %d, '%s', '%s') "
+                      "ON DUPLICATE KEY UPDATE "
+                      "last_seen = '%s';",
+                      hw_addr, arp->vlan, arp->pv_name[pvc],
+                      time_buffer, time_buffer);
 
-          if (mysql_real_query(con, sql_buffer, strlen(sql_buffer))) {
-            mysql_handle_error(con);
+              DEBUG_PRINT("EPICSDATA SQL query : %s\n", sql_buffer);
+
+              if (mysql_real_query(con, sql_buffer, strlen(sql_buffer))) {
+                mysql_handle_error(con);
+              }
+            }
+            break;
           }
         }
       }

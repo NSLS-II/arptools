@@ -232,6 +232,42 @@ int read_interface_config(arpwatch_params *params,
     params->vlan_ignore = NULL;
   }
 
+  //
+  // Check if we have epics pv vlans to monitor
+  //
+
+  config_setting_t *epics_pv =
+    config_setting_lookup(interface, "epics_pv_vlan");
+
+  if (epics_pv) {
+    params->num_epics_pv_vlan = config_setting_length(epics_pv);
+    params->epics_pv_vlan = (int *)
+      malloc(sizeof(int) * params->num_epics_pv_vlan);
+
+    if (!params->epics_pv_vlan) {
+      ERROR_COMMENT("Unable to allocate memory for \n");
+      goto _error;
+    }
+
+    if (config_setting_is_list(epics_pv) == CONFIG_FALSE) {
+      ERROR_COMMENT("epics_pv_vlan must be list.\n");
+      goto _error;
+    }
+
+    DEBUG_PRINT("epics_pv_vlan contains %d vlans.\n",
+                params->num_epics_pv_vlan);
+
+    for (int i = 0; i < params->num_epics_pv_vlan; i++) {
+      params->epics_pv_vlan[i] = config_setting_get_int_elem(epics_pv, i);
+      DEBUG_PRINT("%d Montoring VLAN %d for EPICS PVs\n",
+                  i, params->epics_pv_vlan[i]);
+    }
+
+  } else {
+    params->num_epics_pv_vlan = 0;
+    params->epics_pv_vlan = NULL;
+  }
+
 
   //
   // Now process networks per interface
