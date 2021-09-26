@@ -194,7 +194,7 @@ void * mysql_thread(void * arg) {
       }
 
       if (arp->type & BUFFER_TYPE_EPICS) {
-        DEBUG_COMMENT("Process EPICS PV data\n");
+        DEBUG_PRINT("Process %d EPICS PVs\n", arp->pv_num);
         for (int pvc=0; pvc < arp->pv_num; pvc++) {
           snprintf(sql_buffer, sizeof(sql_buffer),
                   "INSERT INTO epicsdata "
