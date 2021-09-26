@@ -49,7 +49,7 @@
 #define BUFFER_ERR_MEMORY        1
 #define BUFFER_NOERR             0
 #define BUFFER_NAME_MAX          256
-#define BUFFER_PV_MAX            1024
+#define BUFFER_PV_MAX            32
 
 #define BUFFER_TYPE_UNKNOWN           0x00000000
 #define BUFFER_TYPE_ARP_SRC           0x00000001
