@@ -49,6 +49,7 @@
 int buffer_init(buffer_data *buffer, int size, int ring) {
   buffer->data = malloc(size * sizeof(arp_data));
   if (buffer->data == NULL) {
+    DEBUG_COMMENT("Error allocating memory\n");
     return BUFFER_ERR_MEMORY;
   }
 
