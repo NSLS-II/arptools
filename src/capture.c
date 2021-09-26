@@ -357,7 +357,10 @@ int capture_epics_packet(arpwatch_params *params,
                msg->payload_size > BUFFER_PV_NAME_MAX ?
                BUFFER_PV_NAME_MAX : msg->payload_size);
         pos += msg->payload_size;
-        DEBUG_PRINT("EPICS PV : %s\n", d->pv_name[pv_counter]);
+        const char *hw_addr = int_to_mac(d->hw_addr);
+        DEBUG_PRINT("EPICS PV on %s : %s\n",
+                    hw_addr,
+                    d->pv_name[pv_counter]);
         pv_counter++;
       } else {
         ERROR_PRINT("Number of PVs exceeded limit of %d\n",
@@ -546,7 +549,7 @@ int capture_ip_packet(arpwatch_params *params,
     }
   }
 
-  buffer_advance_head(data, 0); // We capture all packets!
+  buffer_advance_head(data, 0);  // We capture all packets!
 
   return 0;
 }
