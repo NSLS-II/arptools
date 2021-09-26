@@ -21,7 +21,6 @@ CREATE TABLE arpdata(
   PRIMARY KEY (hw_address, vlan, location)
 );
 
-DROP TABLE IF EXISTS arpdata_old;
 CREATE TABLE arpdata_old LIKE arpdata;
 
 CREATE TABLE devicedata(
@@ -30,7 +29,6 @@ CREATE TABLE devicedata(
   PRIMARY KEY (hw_address)
 );
 
-DROP TABLE IF EXISTS vlandata;
 CREATE TABLE vlandata(
   vlan              SMALLINT NOT NULL,
   network_location  VARCHAR(256) NOT NULL,
@@ -38,10 +36,10 @@ CREATE TABLE vlandata(
   PRIMARY KEY (vlan)
 );
 
-DROP TABLE IF EXISTS daemondata;
 CREATE TABLE daemondata (
   hostname          VARCHAR(256) NOT NULL,
   iface             VARCHAR(256) NOT NULL,
   last_updated      DATETIME,
+  last_notified     DATETIME,
   PRIMARY KEY (hostname, iface)
 );
