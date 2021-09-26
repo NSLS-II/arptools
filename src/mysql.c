@@ -193,6 +193,25 @@ void * mysql_thread(void * arg) {
         }
       }
 
+      if (arp->type & BUFFER_TYPE_EPICS) {
+        for (int pvc=0; pvc < arp->pv_num; pvc++) {
+          snprintf(sql_buffer, sizeof(sql_buffer),
+                  "INSERT INTO epicsdata "
+                  "(hw_address, vlan, pv_name, last_seen) "
+                  "VALUES ('%s', %d, '%s', '%s') "
+                  "ON DUPLICATE KEY UPDATE "
+                  "last_seen = '%s';",
+                  hw_addr, arp->vlan, arp->pv_name[pvc],
+                  time_buffer, time_buffer);
+
+          DEBUG_PRINT("EPICSDATA SQL query : %s\n", sql_buffer);
+
+          if (mysql_real_query(con, sql_buffer, strlen(sql_buffer))) {
+            mysql_handle_error(con);
+          }
+        }
+      }
+
       buffer_advance_tail(&(params->data_buffer));
       arp = buffer_get_tail(&(params->data_buffer), 0);
     }

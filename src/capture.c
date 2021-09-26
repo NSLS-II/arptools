@@ -352,12 +352,13 @@ int capture_epics_packet(arpwatch_params *params,
       pos += sizeof(struct ca_proto_msg);
 
       if (pv_counter < BUFFER_PV_MAX) {
-        memset(d->pv_name[pv_counter], 0, BUFFER_NAME_MAX);
+        memset(d->pv_name[pv_counter], 0, BUFFER_PV_NAME_MAX);
         memcpy(d->pv_name[pv_counter], packet + pos,
-               msg->payload_size > BUFFER_NAME_MAX ?
-               BUFFER_NAME_MAX : msg->payload_size);
+               msg->payload_size > BUFFER_PV_NAME_MAX ?
+               BUFFER_PV_NAME_MAX : msg->payload_size);
         pos += msg->payload_size;
         DEBUG_PRINT("EPICS PV : %s\n", d->pv_name[pv_counter]);
+        pv_counter++;
       } else {
         ERROR_PRINT("Number of PVs exceeded limit of %d\n",
                     BUFFER_PV_MAX);
@@ -366,6 +367,10 @@ int capture_epics_packet(arpwatch_params *params,
       break;
     }
   }
+
+  // Set the number of PVs
+
+  d->pv_num = pv_counter;
 
 #ifndef DEBUG
   (void)iptr;

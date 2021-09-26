@@ -50,6 +50,7 @@
 #define BUFFER_NOERR             0
 #define BUFFER_NAME_MAX          256
 #define BUFFER_PV_MAX            32
+#define BUFFER_PV_NAME_MAX       50
 
 #define BUFFER_TYPE_UNKNOWN           0x00000000
 #define BUFFER_TYPE_ARP_SRC           0x00000001
@@ -90,7 +91,8 @@ typedef struct {
   int type;
   uint16_t vlan;
   char dhcp_name[BUFFER_NAME_MAX];
-  char pv_name[BUFFER_PV_MAX][BUFFER_NAME_MAX];
+  char pv_name[BUFFER_PV_MAX][BUFFER_PV_NAME_MAX];
+  int pv_num;
 } arp_data;
 
 typedef struct {
