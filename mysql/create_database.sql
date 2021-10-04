@@ -51,3 +51,14 @@ CREATE TABLE epicsdata(
   last_seen         DATETIME,
   PRIMARY KEY (hw_address, vlan, pv_name)
 );
+
+CREATE TABLE registrationdata(
+  hw_address        CHAR(17) NOT NULL,
+  not_registered    BOOL DEFAULT false,
+  registered_by     VARCHAR(256),
+  notes             TEXT,
+  created           DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated           DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (hw_address)
+);
+
